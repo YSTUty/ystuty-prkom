@@ -27,9 +27,7 @@ export class PrKomService implements OnModuleInit {
     // ...
     this.isLoaded = true;
 
-    this.prKomProvider.processFilesWatcher().catch((e) => {
-      this.logger.error(e);
-    });
+    this.prKomProvider.processFilesWatcher().then();
   }
 
   public async getFiles() {
@@ -44,6 +42,7 @@ export class PrKomService implements OnModuleInit {
     return {
       isLoaded: this.isLoaded,
       blockedTime: this.prKomProvider.blockedTime,
+      filesWatcherPower: this.prKomProvider.filesWatcherPower,
       loadedFiles: this.prKomProvider.loadedFiles,
       queueUpdatingFiles: this.prKomProvider.queueUpdatingFiles,
       queueUpdatingFilesLen: this.prKomProvider.queueUpdatingFiles.length,
@@ -64,12 +63,28 @@ export class PrKomService implements OnModuleInit {
     }
 
     const result = [...this.prKomProvider.allMagaIncomingsInfo.values()]
-      .map(({ response: e }) => ({
+      .map(({ response: e, isCache }) => ({
+        isCache,
         info: e.info,
         item: e.list.find((e) => e?.uid === uid),
       }))
       .filter((e) => !!e.item);
 
     return result;
+  }
+
+  public async onAction(action: string) {
+    switch (action) {
+      case 'stop':
+        this.prKomProvider.filesWatcherPower = false;
+        return 'stoping...';
+
+      case 'start':
+        this.prKomProvider.processFilesWatcher().then();
+        return 'started';
+
+      default:
+        return 'unknown action';
+    }
   }
 }

@@ -1,4 +1,11 @@
-import { Controller, Get, Param } from '@nestjs/common';
+import {
+  BadRequestException,
+  Controller,
+  Get,
+  Param,
+  Query,
+} from '@nestjs/common';
+import * as xEnv from '@my-environment';
 
 import { PrKomService } from './prkom.service';
 
@@ -24,5 +31,16 @@ export class PrKomController {
   @Get('get/:uid')
   async getByUid(@Param('uid') uid: string) {
     return await this.prKomService.getByUid(uid);
+  }
+
+  @Get('control/:action')
+  async onAction(
+    @Param('action') action: string,
+    @Query('access_token') accessToken: string,
+  ) {
+    if (accessToken !== xEnv.SERVER_API_ACCESS_TOKEN) {
+      throw new BadRequestException('invalid access token');
+    }
+    return await this.prKomService.onAction(action);
   }
 }

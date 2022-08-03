@@ -15,5 +15,9 @@ export const CACHE_PATH: string = process.env.CACHE_PATH || './.cache-store';
 // Application
 export const APP_NAME: string = process.env.MAIN_NAME || 'YSTUty PrKom';
 export const SERVER_PORT: number = +process.env.SERVER_PORT || 8080;
+export const SERVER_API_ACCESS_TOKEN: string =
+  process.env.SERVER_API_ACCESS_TOKEN ||
+  Math.random().toString(36).substring(2, 15) +
+    Math.random().toString(36).substring(2, 15);
 
 export const YSTU_URL: string = process.env.YSTU_URL || 'https://www.ystu.ru';

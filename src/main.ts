@@ -16,6 +16,7 @@ async function bootstrap() {
   await app.listen(xEnv.SERVER_PORT);
 
   Logger.log(`🚀 Server is listening on port ${xEnv.SERVER_PORT}`, 'Bootstrap');
+  Logger.log(`Server API Token: ${xEnv.SERVER_API_ACCESS_TOKEN}`, 'Bootstrap');
 }
 bootstrap().catch((e) => {
   Logger.warn(`❌  Error starting server, ${e}`, 'Bootstrap');

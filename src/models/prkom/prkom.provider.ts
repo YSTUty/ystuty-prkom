@@ -23,6 +23,7 @@ export class PrKomProvider {
 
   public incomingsList: IncomingsInfoType[] = [];
   public loadedFiles: number = -1;
+  public filesWatcherPower = false;
 
   public queueUpdatingFiles: string[] = [];
 
@@ -243,6 +244,7 @@ export class PrKomProvider {
   }
 
   public async processFilesWatcher() {
+    this.filesWatcherPower = true;
     this.logger.log('[processFilesWatcher] Run');
 
     do {
@@ -313,6 +315,7 @@ export class PrKomProvider {
       );
       await new Promise((resolve) => setTimeout(resolve, 2 * 60 * 1e3));
       await new Promise((resolve) => setImmediate(resolve));
-    } while (true);
+    } while (this.filesWatcherPower);
+    this.logger.log('[processFilesWatcher] Stoped');
   }
 }
