@@ -244,6 +244,13 @@ export class PrKomProvider {
   }
 
   public async processFilesWatcher() {
+    if (this.filesWatcherPower) {
+      return false;
+    }
+
+    // ? TODO: обновить список после перезапуска?
+    // this.queueUpdatingFiles = ...
+
     this.filesWatcherPower = true;
     this.logger.log('[processFilesWatcher] Run');
 
@@ -294,6 +301,10 @@ export class PrKomProvider {
       }
 
       do {
+        if (!this.filesWatcherPower) {
+          break;
+        }
+
         const filename = this.queueUpdatingFiles.shift();
         const magaInfo = await this.getMagaInfo(filename /* , 1e3 * 60 * 30 */);
         if (!magaInfo) continue;
@@ -310,10 +321,12 @@ export class PrKomProvider {
         );
       } while (this.queueUpdatingFiles.length > 0);
 
-      this.logger.log(
-        `[processFilesWatcher] All done. Waiting for next update...`,
-      );
-      await new Promise((resolve) => setTimeout(resolve, 2 * 60 * 1e3));
+      if (this.filesWatcherPower) {
+        this.logger.log(
+          `[processFilesWatcher] All done. Waiting for next update...`,
+        );
+        await new Promise((resolve) => setTimeout(resolve, 2 * 60 * 1e3));
+      }
       await new Promise((resolve) => setImmediate(resolve));
     } while (this.filesWatcherPower);
     this.logger.log('[processFilesWatcher] Stoped');
