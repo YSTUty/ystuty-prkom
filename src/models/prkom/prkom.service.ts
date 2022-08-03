@@ -54,7 +54,9 @@ export class PrKomService implements OnModuleInit {
       throw new BadRequestException('wait for app initialization');
     }
 
-    return [...this.prKomProvider.allMagaIncomingsInfo.values()];
+    return [...this.prKomProvider.allMagaIncomingsInfo.entries()].map(
+      ([filename, e]) => ({ filename, ...e }),
+    );
   }
 
   public async getByUid(uid: string) {
@@ -62,9 +64,10 @@ export class PrKomService implements OnModuleInit {
       throw new BadRequestException('wait for app initialization');
     }
 
-    const result = [...this.prKomProvider.allMagaIncomingsInfo.values()]
-      .map(({ response: e, isCache }) => ({
+    const result = [...this.prKomProvider.allMagaIncomingsInfo.entries()]
+      .map(([filename, { response: e, isCache }]) => ({
         isCache,
+        filename,
         info: e.info,
         item: e.list.find((e) => e?.uid === uid),
       }))
