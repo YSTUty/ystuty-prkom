@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  app_srv:
+    hostname: ystuty_prkom
+    build:
+      context: .
+      target: base
+      dockerfile: ./Dockerfile
+    command: yarn start:dev
+    ports:
+      # 8080 is the default port
+      - ${EXTERNAL_PORT:-8080}:8080
+    volumes:
+      - ./.env:/home/node/app/.env
+      - ./.cache-store:/home/node/app/.cache-store
+    networks:
+      - ystuty_network
+    restart: unless-stopped
+    stdin_open: true # docker run -i
+    tty: true        # docker run -t
+
+networks:
+  ystuty_network:
+    name: ystuty_network
+    driver: bridge
