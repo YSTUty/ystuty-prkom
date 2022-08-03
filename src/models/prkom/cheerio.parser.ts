@@ -122,9 +122,6 @@ export const getMagaInfo = async (html: string) => {
 
   tbodyData.map((e) => e.splice(0, offset));
 
-  // const transpose = (m: string[][]) => m[0].map((e, i) => m.map((x) => x[i]));
-  // const formatedList = transpose(tbodyData);
-
   const formatedList = _.zip(...tbodyData);
   if (formatedList[0][1] !== 'Уникальный код') {
     console.log('failed to parse table #2');
@@ -134,7 +131,7 @@ export const getMagaInfo = async (html: string) => {
 
   for (const data of formatedList) {
     listApplicants.push({
-      position: data[0],
+      position: Number(data[0]),
       uid: data[1],
       totalScore: Number(data[2]),
       score2: Number(data[3]),

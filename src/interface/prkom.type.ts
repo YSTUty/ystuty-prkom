@@ -22,7 +22,7 @@ export type IncomingsLinkType = {
 };
 
 export type MagaAbiturientInfo = {
-  position: string;
+  position: number;
   uid: string;
   totalScore: number;
   score2: number;
