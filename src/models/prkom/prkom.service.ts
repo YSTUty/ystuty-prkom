@@ -1,0 +1,75 @@
+import {
+  BadRequestException,
+  Injectable,
+  Logger,
+  OnModuleInit,
+} from '@nestjs/common';
+
+import { PrKomProvider } from './prkom.provider';
+
+@Injectable()
+export class PrKomService implements OnModuleInit {
+  private readonly logger = new Logger(PrKomService.name);
+
+  constructor(private readonly prKomProvider: PrKomProvider) {}
+
+  public isLoaded = false;
+
+  async onModuleInit() {
+    this.logger.log('Start initializing provider...');
+    await this.prKomProvider.init();
+    this.logger.log('Initializing provider finished');
+
+    this.init().then();
+  }
+
+  public async init() {
+    // ...
+    this.isLoaded = true;
+
+    this.prKomProvider.processFilesWatcher().catch((e) => {
+      this.logger.error(e);
+    });
+  }
+
+  public async getFiles() {
+    if (this.prKomProvider.loadedFiles < 0) {
+      throw new BadRequestException('wait for app initialization');
+    }
+
+    return this.prKomProvider.incomingsFilesWithInfo;
+  }
+
+  public async getInfo() {
+    return {
+      isLoaded: this.isLoaded,
+      blockedTime: this.prKomProvider.blockedTime,
+      loadedFiles: this.prKomProvider.loadedFiles,
+      queueUpdatingFiles: this.prKomProvider.queueUpdatingFiles,
+      queueUpdatingFilesLen: this.prKomProvider.queueUpdatingFiles.length,
+    };
+  }
+
+  public async getList() {
+    if (!this.isLoaded) {
+      throw new BadRequestException('wait for app initialization');
+    }
+
+    return [...this.prKomProvider.allMagaIncomingsInfo.values()];
+  }
+
+  public async getByUid(uid: string) {
+    if (!this.isLoaded) {
+      throw new BadRequestException('wait for app initialization');
+    }
+
+    const result = [...this.prKomProvider.allMagaIncomingsInfo.values()]
+      .map(({ response: e }) => ({
+        info: e.info,
+        item: e.list.find((e) => e?.uid === uid),
+      }))
+      .filter((e) => !!e.item);
+
+    return result;
+  }
+}
