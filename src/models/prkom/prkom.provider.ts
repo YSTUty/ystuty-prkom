@@ -204,10 +204,13 @@ export class PrKomProvider {
 
   private async loadListOfIncoming() {
     try {
-      const prkom_svod_Response = await this.fetch('/files/prkom_svod/', {
-        useCache: true,
-        cacheTtl: 1e3 * 60 * 60 * 24,
-      });
+      const prkom_svod_Response = await this.fetch(
+        '/files/prkom_svod/listab.htm',
+        {
+          useCache: true,
+          cacheTtl: 1e3 * 60 * 60 * 24,
+        },
+      );
 
       this.incomingsList = cheerioParser.getIncomings(prkom_svod_Response.data);
       this.loadedFiles = 0;
