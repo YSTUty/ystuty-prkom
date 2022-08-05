@@ -1,7 +1,7 @@
 import * as cheerio from 'cheerio';
-import * as cheerio_ from 'cheerio_';
-import * as chTableParser from 'cheerio-tableparser';
+import { parseTable } from '@joshuaavalon/cheerio-table-parser';
 import * as _ from 'lodash';
+import * as css from 'css';
 import {
   MagaAbiturientInfo,
   IncomingsLinkType,
@@ -71,37 +71,73 @@ export const getIncomings = (html: string) => {
   return incomings;
 };
 
+const findCssRules = (style: string, property: string, value: string) => {
+  const { stylesheet } = css.parse(style);
+  const rules = stylesheet.rules
+    .map(
+      (rule: css.Rule) =>
+        rule.type === 'rule' &&
+        'declarations' in rule &&
+        rule.declarations.find(
+          (declaration) =>
+            'value' in declaration &&
+            declaration.property === property &&
+            declaration.value === value,
+        ) &&
+        rule,
+    )
+    .filter(Boolean);
+
+  return rules;
+};
+
 export const getMagaInfo = async (html: string) => {
   const $ = cheerio.load(html);
-  chTableParser($);
 
-  let tbodyData = (
-    $('body > table > tbody') as unknown as cheerio_.Cheerio<any>
-  ).parsetable(false, true, true) as string[][];
+  if (!$('body > table > tbody').get(0)) {
+    return null;
+  }
 
-  // console.log('data', tbodyData);
-  tbodyData = tbodyData
-    .map((e) => (e.every((e) => !e) ? null : e))
-    .filter(Boolean);
-  // console.log('tbodyData', tbodyData);
+  let greenSelector: string = null;
+  for (const el of $('style')) {
+    const css = $(el).text();
+    const rules = findCssRules(css, 'background-color', '#90ee90');
+    if (rules.length > 0) {
+      greenSelector = rules[0]?.selectors[0];
+      if (greenSelector) {
+        greenSelector = greenSelector.split('.').slice(-1)[0];
+      }
+      break;
+    }
+  }
+
+  // // to delete extra columns
+  // $('body > table > tbody td[colspan=12]').removeAttr('colspan');
+
+  let tbodyData = parseTable($('body > table > tbody').get(0), {
+    parser(element) {
+      const content = $(element).text().trim();
+      const isGreen = greenSelector && $(element).hasClass(greenSelector);
+      // const classes = $(element).attr('class');
+      return content && /* classes && */ { isGreen, content /* classes */ };
+    },
+  });
 
   if (tbodyData.length === 0) return null;
 
   let [
     ,
     ,
-    buildDate,
-    prkomDate,
-    competitionGroupName,
-    formTraining,
-    levelTraining,
-    directionTraining,
-    basisAdmission,
-    sourceFunding,
-    numbersInfo,
-    ,
-    ...restTable
-  ] = tbodyData[0];
+    [{ content: buildDate }],
+    [{ content: prkomDate }],
+    [{ content: competitionGroupName }],
+    [{ content: formTraining }],
+    [{ content: levelTraining }],
+    [{ content: directionTraining }],
+    [{ content: basisAdmission }],
+    [{ content: sourceFunding }],
+    [{ content: numbersInfo }],
+  ] = tbodyData;
 
   const magaInfo: MagaInfoType = {
     buildDate,
@@ -115,34 +151,30 @@ export const getMagaInfo = async (html: string) => {
     numbersInfo,
   };
 
-  // ! hardcode or smart get from table
-  const offset = 12;
+  // ! hardcode. or smart get from table
+  tbodyData.splice(0, 12);
 
-  const listApplicants: MagaAbiturientInfo[] = [];
-
-  tbodyData.map((e) => e.splice(0, offset));
-
-  const formatedList = _.zip(...tbodyData);
-  if (formatedList[0][1] !== 'Уникальный код') {
-    console.log('failed to parse table #2');
-  } else {
-    formatedList.splice(0, 1);
+  const [titles] = tbodyData.splice(0, 1);
+  if (titles[1].content !== 'Уникальный код') {
+    console.warn('Failed to parse table #2');
   }
 
-  for (const data of formatedList) {
+  const listApplicants: MagaAbiturientInfo[] = [];
+  for (const data of tbodyData) {
     listApplicants.push({
-      position: Number(data[0]),
-      uid: data[1],
-      totalScore: Number(data[2]),
-      score2: Number(data[3]),
-      scoreExam: Number(data[4]),
-      scoreInterview: Number(data[5]),
-      scoreCompetitive: Number(data[6]),
-      preemptiveRight: !!data[7],
-      consentTransfer: !!data[8],
-      original: !!data[9],
-      originalToUniversity: !!data[10],
-      consentToanotherDirection: !!data[11],
+      isGreen: data[0].isGreen,
+      position: Number(data[0].content),
+      uid: data[1].content,
+      totalScore: Number(data[2].content) || null,
+      scoreSubjects: Number(data[3].content) || null,
+      scoreExam: Number(data[4].content) || null,
+      scoreInterview: Number(data[5].content) || null,
+      scoreCompetitive: Number(data[6].content) || null,
+      preemptiveRight: !!data[7].content,
+      consentTransfer: !!data[8].content,
+      original: !!data[9].content,
+      originalToUniversity: !!data[10].content,
+      consentToanotherDirection: !!data[11].content,
     });
   }
 
