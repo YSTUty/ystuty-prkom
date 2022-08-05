@@ -220,18 +220,18 @@ export class PrKomProvider {
   }
 
   public async getMagaInfo(filename: string, cacheTtl = 1e3 * 60 * 7) {
-    const tableResponse = await this.fetch(`/files/prkom_svod/${filename}`, {
-      useCache: true,
-      cacheTtl,
-    });
-    // console.log('tableResponse', tableResponse);
+    try {
+      const { isCache, data } = await this.fetch(
+        `/files/prkom_svod/${filename}`,
+        { useCache: true, cacheTtl },
+      );
 
-    const magaInfo = await cheerioParser.getMagaInfo(tableResponse.data);
-    if (!magaInfo) return null;
-    return {
-      isCache: tableResponse.isCache,
-      response: magaInfo,
-    };
+      const response = await cheerioParser.getMagaInfo(data);
+      return response ? { isCache, response } : null;
+    } catch (error) {
+      this.logger.error('getMagaInfo', error, filename);
+      return null;
+    }
   }
 
   public get incomingsFiles() {
