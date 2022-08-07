@@ -65,13 +65,35 @@ export class PrKomService implements OnModuleInit {
     }
 
     const result = [...this.prKomProvider.allMagaIncomingsInfo.entries()]
-      .map(([filename, { response: e, isCache }]) => ({
-        isCache,
-        filename,
-        info: e.info,
-        item: e.list.find((e) => e?.uid === uid),
-      }))
-      .filter((e) => !!e.item);
+      .map(([filename, { response: e, isCache }]) => {
+        const item = e.list.find((e) => e?.uid === uid);
+        if (!item) {
+          return null;
+        }
+        let afterGreens = 0;
+        let beforeGreens = 0;
+        for (const el of e.list) {
+          if (el.isGreen) {
+            if (el.position < item.position) {
+              beforeGreens++;
+            } else if (el.position !== item.position) {
+              afterGreens++;
+            }
+          }
+        }
+        return {
+          isCache,
+          filename,
+          info: e.info,
+          item,
+          payload: {
+            afterGreens,
+            beforeGreens,
+            totalItems: e.list.length,
+          },
+        };
+      })
+      .filter(Boolean);
 
     return result;
   }
