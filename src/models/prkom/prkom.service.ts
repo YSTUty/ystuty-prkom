@@ -49,17 +49,25 @@ export class PrKomService implements OnModuleInit {
     };
   }
 
-  public async getList() {
+  public async getList(showOriginalInfo = false) {
     if (!this.isLoaded) {
       throw new BadRequestException('wait for app initialization');
     }
 
     return [...this.prKomProvider.allMagaIncomingsInfo.entries()].map(
-      ([filename, e]) => ({ filename, ...e }),
+      ([filename, { isCache, response }]) => ({
+        filename,
+        isCache,
+        response: {
+          info: response.info,
+          list: response.list,
+          ...(showOriginalInfo && { originalInfo: response.originalInfo }),
+        },
+      }),
     );
   }
 
-  public async getByUid(uid: string) {
+  public async getByUid(uid: string, showOriginalInfo = false) {
     if (!this.isLoaded) {
       throw new BadRequestException('wait for app initialization');
     }
@@ -85,6 +93,7 @@ export class PrKomService implements OnModuleInit {
           isCache,
           filename,
           info: e.info,
+          ...(showOriginalInfo && { originalInfo: e.originalInfo }),
           item,
           payload: {
             afterGreens,

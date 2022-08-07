@@ -5,8 +5,11 @@ import * as css from 'css';
 import {
   MagaAbiturientInfo,
   IncomingsLinkType,
-  MagaInfoType,
+  MagaOriginalInfoType,
   AbiturientInfoStateType,
+  MagaInfoType,
+  FormTrainingType,
+  LevelTrainingType,
 } from '@my-interfaces';
 
 export const getIncomings = (html: string) => {
@@ -129,18 +132,30 @@ export const getMagaInfo = async (html: string) => {
   let [
     ,
     ,
+    // Дата формирования - 07.07.2022. Время формирования - 15:00:00.
     [{ content: buildDate }],
+    // Приемная кампания- Приемная кампания 222 от 31.03.2022 14:06:34
     [{ content: prkomDate }],
+    // Конкурсная группа - Управление по программированию
     [{ content: competitionGroupName }],
+    // Форма обучения - Очная
     [{ content: formTraining }],
+    // Уровень подготовки - Магистр
     [{ content: levelTraining }],
+    // УГС/Направление подготовки/специальность - 27.04.04 Управление в технических системах
     [{ content: directionTraining }],
+    // Основание поступления - Бюджетная основа
     [{ content: basisAdmission }],
+    // Источник финансирования - Федеральный бюджет
     [{ content: sourceFunding }],
+    // Всего мест: 9. Зачислено: 0. К зачислению: 9.
     [{ content: numbersInfo }],
   ] = tbodyData;
 
-  const magaInfo: MagaInfoType = {
+  // ! hardcode. or smart get from table
+  tbodyData.splice(0, 12);
+
+  const originalInfo: MagaOriginalInfoType = {
     buildDate,
     prkomDate,
     competitionGroupName,
@@ -152,8 +167,74 @@ export const getMagaInfo = async (html: string) => {
     numbersInfo,
   };
 
-  // ! hardcode. or smart get from table
-  tbodyData.splice(0, 12);
+  const info: MagaInfoType = {
+    buildDate: (({ DD, MM, YYYY, time } = {}) =>
+      !time ? null : new Date(`${YYYY}.${MM}.${DD} ${time}`))(
+      buildDate.match(
+        /.* - (?<DD>[0-9]{2})\.(?<MM>[0-9]{2})\.(?<YYYY>[0-9]{4})\. .* - (?<time>[0-9:]+).$/i,
+      )?.groups,
+    ),
+    prkom: (({ number, DD, MM, YYYY, time } = {}) =>
+      !number && !time
+        ? null
+        : {
+            number: Number(number),
+            date: new Date(`${YYYY}.${MM}.${DD} ${time}`),
+          })(
+      prkomDate.match(
+        /.* ?- .* ? (?<number>[0-9]{1,4}) от (?<DD>[0-9]{2})\.(?<MM>[0-9]{2})\.(?<YYYY>[0-9]{4}) (?<time>[0-9:]+)$/i,
+      )?.groups,
+    ),
+    competitionGroupName: (({ name } = {}) => name || null)(
+      competitionGroupName.match(/(?![^-]+)- (?<name>.*)/i)?.groups,
+    ),
+    formTraining: (({ type } = {}) => {
+      switch (type.toLocaleLowerCase()) {
+        case 'очная':
+          return FormTrainingType.FullTime;
+        case 'заочная':
+          return FormTrainingType.Extramural;
+        case 'очно-заочная':
+          return FormTrainingType.PartTime;
+        default:
+          return FormTrainingType.Unknown;
+      }
+    })(formTraining.match(/(?![^-]+)- (?<type>.*)/i)?.groups),
+    levelTraining: (({ type } = {}) => {
+      switch (type.toLocaleLowerCase()) {
+        case 'бакалавр':
+          return LevelTrainingType.Bachelor;
+        case 'магистр':
+          return LevelTrainingType.Magister;
+        case 'аспирантура':
+          return LevelTrainingType.Postgraduate;
+        default:
+          return LevelTrainingType.Unknown;
+      }
+    })(levelTraining.match(/(?![^-]+)- (?<type>.*)/i)?.groups),
+    directionTraining: (({ code, name } = {}) =>
+      !name ? null : { code, name })(
+      directionTraining.match(/(?![^-]+)- (?<code>[0-9\.]+) (?<name>.*)/i)
+        ?.groups,
+    ),
+    basisAdmission: (({ name } = {}) => name || null)(
+      basisAdmission.match(/(?![^-]+)- (?<name>.*)/i)?.groups,
+    ),
+    sourceFunding: (({ name } = {}) => name || null)(
+      sourceFunding.match(/(?![^-]+)- (?<name>.*)/i)?.groups,
+    ),
+    numbersInfo: ((nums) =>
+      !nums
+        ? null
+        : Object.keys(nums).reduce(
+            (p, c) => ({ ...p, [c]: Number(nums[c]) }),
+            {} as MagaInfoType['numbersInfo'],
+          ))(
+      numbersInfo.match(
+        /.*: (?<total>[0-9]{1,4})\..*: (?<enrolled>[0-9]{1,4})\..*: (?<toenroll>[0-9]{1,4})\.?$/i,
+      )?.groups,
+    ),
+  };
 
   const [titles] = tbodyData.splice(0, 1);
   if (titles[1].content !== 'Уникальный код') {
@@ -184,7 +265,8 @@ export const getMagaInfo = async (html: string) => {
   }
 
   return {
-    info: magaInfo,
+    originalInfo: originalInfo,
+    info,
     list: listApplicants,
   };
 };

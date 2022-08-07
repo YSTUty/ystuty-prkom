@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   Controller,
+  DefaultValuePipe,
   Get,
   Param,
   Query,
@@ -14,8 +15,10 @@ export class PrKomController {
   constructor(private readonly prKomService: PrKomService) {}
 
   @Get('fulllist')
-  async getFullList() {
-    return await this.prKomService.getList();
+  async getFullList(
+    @Query('original', new DefaultValuePipe(false)) original: boolean,
+  ) {
+    return await this.prKomService.getList(original);
   }
 
   @Get('files')
@@ -29,8 +32,11 @@ export class PrKomController {
   }
 
   @Get('get/:uid')
-  async getByUid(@Param('uid') uid: string) {
-    return await this.prKomService.getByUid(uid);
+  async getByUid(
+    @Param('uid') uid: string,
+    @Query('original', new DefaultValuePipe(false)) original: boolean,
+  ) {
+    return await this.prKomService.getByUid(uid, original);
   }
 
   @Get('control/:action')
