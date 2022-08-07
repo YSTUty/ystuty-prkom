@@ -6,6 +6,7 @@ import {
   MagaAbiturientInfo,
   IncomingsLinkType,
   MagaInfoType,
+  AbiturientInfoStateType,
 } from '@my-interfaces';
 
 export const getIncomings = (html: string) => {
@@ -175,6 +176,10 @@ export const getMagaInfo = async (html: string) => {
       original: !!data[9].content,
       originalToUniversity: !!data[10].content,
       consentToanotherDirection: !!data[11].content,
+      state:
+        data[12]?.content?.toLocaleLowerCase() === 'Подано'.toLocaleLowerCase()
+          ? AbiturientInfoStateType.Submitted
+          : AbiturientInfoStateType.Unknown,
     });
   }
 

@@ -21,6 +21,11 @@ export type IncomingsLinkType = {
   }[];
 };
 
+export enum AbiturientInfoStateType {
+  Unknown = 0,
+  Submitted = 1,
+}
+
 export type MagaAbiturientInfo = {
   isGreen: boolean;
   position: number;
@@ -35,6 +40,7 @@ export type MagaAbiturientInfo = {
   original: boolean;
   originalToUniversity: boolean;
   consentToanotherDirection: boolean;
+  state: AbiturientInfoStateType | null;
 };
 
 export type MagaInfoType = {
