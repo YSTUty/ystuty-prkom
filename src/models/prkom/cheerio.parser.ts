@@ -260,6 +260,9 @@ export const getMagaInfo = async (html: string) => {
       state:
         data[12]?.content?.toLocaleLowerCase() === 'Подано'.toLocaleLowerCase()
           ? AbiturientInfoStateType.Submitted
+          : data[12]?.content?.toLocaleLowerCase() ===
+            'Зачислен'.toLocaleLowerCase()
+          ? AbiturientInfoStateType.Enrolled
           : AbiturientInfoStateType.Unknown,
     });
   }
