@@ -121,7 +121,8 @@ export const getMagaInfo = async (html: string) => {
   let tbodyData = parseTable($('body > table > tbody').get(0), {
     parser(element) {
       const content = $(element).text().trim();
-      const isGreen = greenSelector && $(element).hasClass(greenSelector);
+      const isGreen =
+        (greenSelector && $(element).hasClass(greenSelector)) || false;
       // const classes = $(element).attr('class');
       return content && /* classes && */ { isGreen, content /* classes */ };
     },
