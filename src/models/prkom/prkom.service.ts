@@ -38,6 +38,14 @@ export class PrKomService implements OnModuleInit {
     return this.prKomProvider.incomingsFilesWithInfo;
   }
 
+  public async getIncomingsList() {
+    if (this.prKomProvider.incomingsList.length > 0) {
+      throw new BadRequestException('wait for app initialization');
+    }
+
+    return this.prKomProvider.incomingsList;
+  }
+
   public async getInfo() {
     return {
       isLoaded: this.isLoaded,

@@ -14,11 +14,23 @@ import { PrKomService } from './prkom.service';
 export class PrKomController {
   constructor(private readonly prKomService: PrKomService) {}
 
-  @Get('fulllist')
+  @Get('full_list')
   async getFullList(
     @Query('original', new DefaultValuePipe(false)) original: boolean,
+    @Query('filename') filename: string,
   ) {
-    return await this.prKomService.getList(original);
+    const list = await this.prKomService.getList(original);
+    if (filename) {
+      return list.filter(
+        (e) => e.filename.toLowerCase() === filename.toLowerCase(),
+      );
+    }
+    return list;
+  }
+
+  @Get('incomings_list')
+  async getIncomingsList() {
+    return await this.prKomService.getIncomingsList();
   }
 
   @Get('files')

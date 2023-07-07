@@ -244,27 +244,48 @@ export const getMagaInfo = async (html: string) => {
 
   const listApplicants: MagaAbiturientInfo[] = [];
   for (const data of tbodyData) {
+    let ind = -1;
+    const nextCol = () => data[++ind]?.content;
+    const nextColNum = (val = nextCol()) =>
+      !isNaN(Number(val)) ? Number(val) : null;
+
     listApplicants.push({
       isGreen: data[0].isGreen,
-      position: Number(data[0].content),
-      uid: data[1].content,
-      totalScore: Number(data[2].content) || null,
-      scoreSubjects: Number(data[3].content) || null,
-      scoreExam: Number(data[4].content) || null,
-      scoreInterview: Number(data[5].content) || null,
-      scoreCompetitive: Number(data[6].content) || null,
-      preemptiveRight: !!data[7].content,
-      consentTransfer: !!data[8].content,
-      original: !!data[9].content,
-      originalToUniversity: !!data[10].content,
-      consentToanotherDirection: !!data[11].content,
-      state:
-        data[12]?.content?.toLocaleLowerCase() === 'Подано'.toLocaleLowerCase()
+      // * №
+      position: nextColNum(),
+      // * Уникальный код
+      uid: nextCol(),
+      // * Сумма баллов
+      totalScore: nextColNum(),
+      // * Сумма баллов по предметам
+      scoreSubjects: nextColNum(),
+      // * Вступительное испытание ...
+      scoreExam: nextColNum(),
+      // // * Собеседование ...
+      // scoreInterview: nextColNum(),
+      // * Сумма баллов за инд.дост.(конкурсные)
+      scoreCompetitive: nextColNum(),
+      // * Преимущ. право
+      preemptiveRight: !!nextCol(),
+      // // * Согласие на зачисление
+      // consentTransfer: !!nextCol(),
+      // // * Оригинал
+      // original: !!nextCol(),
+      // * Оригинал в вузе
+      originalToUniversity: !!nextCol(),
+      // * Состояние
+      state: ((content) =>
+        content === 'Подано'.toLocaleLowerCase()
           ? AbiturientInfoStateType.Submitted
-          : data[12]?.content?.toLocaleLowerCase() ===
-            'Зачислен'.toLocaleLowerCase()
+          : content === 'Зачислен'.toLocaleLowerCase()
           ? AbiturientInfoStateType.Enrolled
-          : AbiturientInfoStateType.Unknown,
+          : AbiturientInfoStateType.Unknown)(nextCol()?.toLocaleLowerCase()),
+      // // * Согласие на др.напр.
+      // consentToanotherDirection: !!nextCol(),
+      // * Приоритет
+      priority: nextColNum(),
+      // * Высший приоритет
+      priorityHight: nextColNum(),
     });
   }
 

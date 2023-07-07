@@ -33,24 +33,9 @@ export class PrKomProvider {
   constructor(private readonly httpService: HttpService) {
     httpService.axiosRef.defaults.baseURL = xEnv.YSTU_URL;
 
-    // * Fake headers
-    const chromiumV = 103;
-    httpService.axiosRef.defaults.headers['Sec-CH-UA'] = _.shuffle([
-      '".Not/A)Brand";v="99"',
-      `"Google Chrome";v="${chromiumV}"`,
-      `"Chromium";v="${chromiumV}"`,
-    ]).join(', ');
-    httpService.axiosRef.defaults.headers['sec-ch-ua-mobile'] = '?0';
-    httpService.axiosRef.defaults.headers['sec-ch-ua-platform'] = '"Windows"';
-    httpService.axiosRef.defaults.headers['Sec-Fetch-Dest'] = 'document';
-    httpService.axiosRef.defaults.headers['Sec-Fetch-Mode'] = 'navigate';
-    httpService.axiosRef.defaults.headers['Sec-Fetch-Site'] = 'none';
-    httpService.axiosRef.defaults.headers['Sec-Fetch-User'] = '?1';
-    httpService.axiosRef.defaults.headers['User-Agent'] =
-      'Mozilla/5.0' +
-      ' (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko)' +
-      ` Chrome/${chromiumV}.0.0.0 Safari/537.36`;
-    // * /end Fake headers
+    httpService.axiosRef.defaults.headers[
+      'User-Agent'
+    ] = `${xEnv.APP_NAME}/${process.env.npm_package_version}`;
 
     httpService.axiosRef.interceptors.response.use(async (response) => {
       const setCookie = response.headers['set-cookie'] as string[];
@@ -205,7 +190,7 @@ export class PrKomProvider {
   private async loadListOfIncoming() {
     try {
       const prkom_svod_Response = await this.fetch(
-        '/files/prkom_svod/listab.htm',
+        '/files/prkom_svod/listab1.htm',
         {
           useCache: true,
           cacheTtl: 1e3 * 60 * 60 * 24,
@@ -316,7 +301,7 @@ export class PrKomProvider {
 
         if (!magaInfo.isCache) {
           this.logger.log(`[processFilesWatcher] Update file: ${filename}`);
-          await new Promise((resolve) => setTimeout(resolve, 60 * 1e3));
+          await new Promise((resolve) => setTimeout(resolve, /* 60 */ 2 * 1e3));
         }
 
         this.logger.log(
