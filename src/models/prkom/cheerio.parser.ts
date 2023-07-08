@@ -202,12 +202,13 @@ export const getMagaInfo = async (html: string) => {
       }
     })(formTraining.match(/(?![^-]+)- (?<type>.*)/i)?.groups),
     levelTraining: (({ type } = {}) => {
-      switch (type.toLocaleLowerCase()) {
-        case 'бакалавр':
+      let str = type.toLocaleLowerCase();
+      switch (true) {
+        case str.startsWith('бакалавр'):
           return LevelTrainingType.Bachelor;
-        case 'магистр':
+        case str.startsWith('магистр'):
           return LevelTrainingType.Magister;
-        case 'аспирантура':
+        case str.startsWith('аспирантура'):
           return LevelTrainingType.Postgraduate;
         default:
           return LevelTrainingType.Unknown;
