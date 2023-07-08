@@ -1,6 +1,6 @@
 import { HttpService } from '@nestjs/axios';
 import { Injectable, Logger } from '@nestjs/common';
-import { AxiosRequestConfig, AxiosResponse, Method } from 'axios';
+import { AxiosRequestConfig, AxiosResponse, Method, AxiosError } from 'axios';
 import { firstValueFrom } from 'rxjs';
 import * as _ from 'lodash';
 
@@ -189,7 +189,7 @@ export class PrKomProvider {
         '/files/prkom_svod/listab1.htm',
         {
           useCache: true,
-          cacheTtl: 1e3 * 60 * 60 * 24,
+          cacheTtl: 1e3 * 60 /* * 60 * 24 */,
         },
       );
 
@@ -212,6 +212,11 @@ export class PrKomProvider {
       const response = await cheerioParser.parseIncomingsInfo(data);
       return response ? { isCache, response } : null;
     } catch (error) {
+      if (error instanceof AxiosError) {
+        if (error.response?.status === 404) {
+          return null;
+        }
+      }
       this.logger.error('parseIncomingsInfo', error, filename);
       return null;
     }
@@ -272,9 +277,7 @@ export class PrKomProvider {
         this.logger.log(
           `[processFilesWatcher] All done. Waiting for next update...`,
         );
-        await new Promise((resolve) =>
-          setTimeout(resolve, /* 2 * 60 */ 20 * 1e3),
-        );
+        await new Promise((resolve) => setTimeout(resolve, 8 * 60 * 1e3));
       }
       await new Promise((resolve) => setImmediate(resolve));
     } while (this.filesWatcherPower);
