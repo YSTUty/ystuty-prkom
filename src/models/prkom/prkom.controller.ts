@@ -6,10 +6,12 @@ import {
   Param,
   Query,
 } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
 import * as xEnv from '@my-environment';
 
 import { PrKomService } from './prkom.service';
 
+@ApiTags('ystu')
 @Controller('/admission')
 export class PrKomController {
   constructor(private readonly prKomService: PrKomService) {}
