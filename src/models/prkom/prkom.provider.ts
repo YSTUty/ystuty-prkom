@@ -185,13 +185,10 @@ export class PrKomProvider {
 
   private async loadListOfIncoming() {
     try {
-      const prkom_svod_Response = await this.fetch(
-        '/files/prkom_svod/listab1.htm',
-        {
-          useCache: true,
-          cacheTtl: 1e3 * 60 /* * 60 * 24 */,
-        },
-      );
+      const prkom_svod_Response = await this.fetch('/prkom_svod/listab1.htm', {
+        useCache: true,
+        cacheTtl: 1e3 * 60 /* * 60 * 24 */,
+      });
 
       this.incomingsList = cheerioParser.parseMainIncomingsList(
         prkom_svod_Response.data,
@@ -204,10 +201,10 @@ export class PrKomProvider {
 
   public async getIncomingsInfo(filename: string, cacheTtl = 1e3 * 60 * 7) {
     try {
-      const { isCache, data } = await this.fetch(
-        `/files/prkom_svod/${filename}`,
-        { useCache: true, cacheTtl },
-      );
+      const { isCache, data } = await this.fetch(`/prkom_svod/${filename}`, {
+        useCache: true,
+        cacheTtl,
+      });
 
       const response = await cheerioParser.parseIncomingsInfo(data);
       return response ? { isCache, response } : null;
