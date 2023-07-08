@@ -4,6 +4,14 @@ import {
   Logger,
   OnModuleInit,
 } from '@nestjs/common';
+import * as _ from 'lodash';
+import {
+  AbiturientInfo_Magister,
+  IncomingsPageOriginalInfo,
+  IncomingsPageInfo,
+  FormTrainingType,
+  LevelTrainingType,
+} from '@my-interfaces';
 
 import { PrKomProvider } from './prkom.provider';
 
@@ -73,6 +81,72 @@ export class PrKomService implements OnModuleInit {
         },
       }),
     );
+  }
+
+  public async getByFake(showOriginalInfo = false) {
+    let response: {
+      item: AbiturientInfo_Magister;
+      payload: {
+        afterGreens: number;
+        beforeGreens: number;
+        totalItems: number;
+      };
+      originalInfo?: IncomingsPageOriginalInfo;
+      isCache: any;
+      filename: string;
+      info: IncomingsPageInfo;
+    }[] = [];
+
+    response.push({
+      isCache: null,
+      filename: '232_Khimicheskaya tekhnologiya_B.html',
+      info: {
+        buildDate: new Date(),
+        prkom: { number: 232, date: new Date('2022-12-22T12:30:40.000Z') },
+        competitionGroupName: 'Химическая технология',
+        formTraining: FormTrainingType.FullTime,
+        levelTraining: LevelTrainingType.Magister,
+        directionTraining: {
+          code: '18.04.01',
+          name: 'Химическая технология',
+        },
+        basisAdmission: 'Бюджетная основа',
+        sourceFunding: 'Федеральный бюджет',
+        numbersInfo: { total: 7, enrolled: 0, toenroll: 7 },
+      },
+      ...(showOriginalInfo && {
+        originalInfo: {
+          buildDate:
+            'Дата формирования - 07.07.2023. Время формирования - xxx.',
+          prkomDate: 'Приемная кампания- Приемная кампания 232 от xxx',
+          competitionGroupName: 'Конкурсная группа - Химия',
+          formTraining: 'Форма обучения - Очная',
+          levelTraining: 'Уровень подготовки - Магистратура',
+          directionTraining:
+            'УГС/Направление подготовки/специальность - 04.04.01 Химия',
+          basisAdmission: 'Основание поступления - Бюджетная основа',
+          sourceFunding: 'Источник финансирования - Федеральный бюджет',
+          numbersInfo: 'Всего мест: 4. Зачислено: 0. К зачислению: 4.',
+        },
+      }),
+      item: {
+        isGreen: false,
+        position: _.random(1, 3),
+        uid: '123-456-789 00',
+        totalScore: _.random(10, 11),
+        scoreSubjectsSum: 0,
+        scoreExam: null,
+        scoreCompetitive: _.random(10, 11),
+        preemptiveRight: false,
+        originalInUniversity: true,
+        state: 1,
+        priority: 1,
+        priorityHight: 0,
+      },
+      payload: { afterGreens: 0, beforeGreens: 0, totalItems: 12 },
+    });
+
+    return response;
   }
 
   public async getByUid(uid: string, showOriginalInfo = false) {

@@ -45,6 +45,13 @@ export class PrKomController {
     return await this.prKomService.getInfo();
   }
 
+  @Get('get/fake')
+  async getByFake(
+    @Query('original', new DefaultValuePipe(false)) original: boolean,
+  ) {
+    return await this.prKomService.getByFake(original);
+  }
+
   @Get('get/:uid')
   async getByUid(
     @Param('uid') uid: string,
