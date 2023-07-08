@@ -7,10 +7,7 @@ import * as _ from 'lodash';
 import { cacheManager, md5 } from '@my-common';
 import * as xEnv from '@my-environment';
 import * as cheerioParser from './cheerio.parser';
-import {
-  IncomingsLinkType as IncomingsInfoType,
-  MagaCachedInfo,
-} from '@my-interfaces';
+import { IncomingsLink, AbiturientCachedInfo } from '@my-interfaces';
 
 const COOKIES_FILE = 'cookies';
 
@@ -21,14 +18,13 @@ export class PrKomProvider {
   public blockedTime: number = 0;
   private cookies: Record<string, any> = null;
 
-  public incomingsList: IncomingsInfoType[] = [];
+  public incomingsList: IncomingsLink[] = [];
   public loadedFiles: number = -1;
   public filesWatcherPower = false;
 
   public queueUpdatingFiles: string[] = [];
 
-  // public allIncomingsInfo = new Map<string, any>();
-  public allMagaIncomingsInfo = new Map<string, MagaCachedInfo>();
+  public allIncomingsInfo = new Map<string, AbiturientCachedInfo>();
 
   constructor(private readonly httpService: HttpService) {
     httpService.axiosRef.defaults.baseURL = xEnv.YSTU_URL;
@@ -197,38 +193,38 @@ export class PrKomProvider {
         },
       );
 
-      this.incomingsList = cheerioParser.getIncomings(prkom_svod_Response.data);
+      this.incomingsList = cheerioParser.parseMainIncomingsList(
+        prkom_svod_Response.data,
+      );
       this.loadedFiles = 0;
     } catch (err) {
       this.logger.error(err);
     }
   }
 
-  public async getMagaInfo(filename: string, cacheTtl = 1e3 * 60 * 7) {
+  public async getIncomingsInfo(filename: string, cacheTtl = 1e3 * 60 * 7) {
     try {
       const { isCache, data } = await this.fetch(
         `/files/prkom_svod/${filename}`,
         { useCache: true, cacheTtl },
       );
 
-      const response = await cheerioParser.getMagaInfo(data);
+      const response = await cheerioParser.parseIncomingsInfo(data);
       return response ? { isCache, response } : null;
     } catch (error) {
-      this.logger.error('getMagaInfo', error, filename);
+      this.logger.error('parseIncomingsInfo', error, filename);
       return null;
     }
   }
 
-  public get incomingsFiles() {
+  public get incomingsFilesWithInfo() {
     return this.incomingsList.flatMap((e) =>
-      e.specialties.flatMap((e) => e.files.map((e) => e.filename)),
+      e.specialties.filter(Boolean).flatMap((e) => e.files),
     );
   }
 
-  public get incomingsFilesWithInfo() {
-    return this.incomingsList.flatMap((e) =>
-      e.specialties.flatMap((e) => e.files),
-    );
+  public get incomingsFileNames() {
+    return this.incomingsFilesWithInfo.map((e) => e.filename);
   }
 
   public async processFilesWatcher() {
@@ -236,55 +232,17 @@ export class PrKomProvider {
       return false;
     }
 
-    // ? TODO: обновить список после перезапуска?
-    // this.queueUpdatingFiles = ...
-
     this.filesWatcherPower = true;
     this.logger.log('[processFilesWatcher] Run');
 
     do {
       this.logger.debug('[processFilesWatcher] execute loop');
       if (this.queueUpdatingFiles.length === 0) {
-        // this.queueUpdatingFiles = [...this.incomingsFiles];
-
-        // ! Filtering for only maga (TEST)
-        const magaSpecialties = this.incomingsList
-          .flatMap(
-            (e) =>
-              e.name
-                .toLocaleLowerCase()
-                .includes('Магистр'.toLocaleLowerCase()) &&
-              // e.levelType.toLocaleLowerCase() === 'Очное'.toLocaleLowerCase() &&
-              e.specialties,
-          )
-          .filter(Boolean);
-
-        this.queueUpdatingFiles = magaSpecialties.flatMap((e) =>
-          e.files.map((e) => e.filename),
-        );
-
-        this.queueUpdatingFiles = _.shuffle(this.queueUpdatingFiles);
-
-        this.queueUpdatingFiles.unshift(
-          ...magaSpecialties
-            .flatMap((e) =>
-              ['09.04.02', '27.04.04', '08.04.01'].includes(e.code)
-                ? e.files.map((e) => e.filename)
-                : null,
-            )
-            .filter(Boolean),
-        );
-        this.queueUpdatingFiles = _.uniq(this.queueUpdatingFiles);
-
-        // Save only `Бюджет`
-        this.queueUpdatingFiles = this.queueUpdatingFiles.filter((e) =>
-          e.endsWith('_B.html'),
-        );
-        // ! /end TEST
+        this.queueUpdatingFiles = [...this.incomingsFileNames];
 
         this.logger.log(
           `[processFilesWatcher] Updated queue updating files: ${this.queueUpdatingFiles.length}`,
-          this.queueUpdatingFiles,
+          // this.queueUpdatingFiles,
         );
       }
 
@@ -292,20 +250,21 @@ export class PrKomProvider {
         if (!this.filesWatcherPower) {
           break;
         }
+        await this.loadListOfIncoming();
 
         const filename = this.queueUpdatingFiles.shift();
-        const magaInfo = await this.getMagaInfo(filename /* , 1e3 * 60 * 30 */);
-        if (!magaInfo) continue;
-        this.allMagaIncomingsInfo.set(filename, magaInfo);
-        this.loadedFiles = this.allMagaIncomingsInfo.size;
+        const incomingsInfo = await this.getIncomingsInfo(filename);
+        if (!incomingsInfo) continue;
+        this.allIncomingsInfo.set(filename, incomingsInfo);
+        this.loadedFiles = this.allIncomingsInfo.size;
 
-        if (!magaInfo.isCache) {
+        if (!incomingsInfo.isCache) {
           this.logger.log(`[processFilesWatcher] Update file: ${filename}`);
           await new Promise((resolve) => setTimeout(resolve, /* 60 */ 2 * 1e3));
         }
 
         this.logger.log(
-          `[processFilesWatcher] Progress: ${this.queueUpdatingFiles.length} => ${this.allMagaIncomingsInfo.size}`,
+          `[processFilesWatcher] Progress: ${this.queueUpdatingFiles.length} => ${this.allIncomingsInfo.size}`,
         );
       } while (this.queueUpdatingFiles.length > 0);
 
@@ -313,7 +272,9 @@ export class PrKomProvider {
         this.logger.log(
           `[processFilesWatcher] All done. Waiting for next update...`,
         );
-        await new Promise((resolve) => setTimeout(resolve, 2 * 60 * 1e3));
+        await new Promise((resolve) =>
+          setTimeout(resolve, /* 2 * 60 */ 20 * 1e3),
+        );
       }
       await new Promise((resolve) => setImmediate(resolve));
     } while (this.filesWatcherPower);

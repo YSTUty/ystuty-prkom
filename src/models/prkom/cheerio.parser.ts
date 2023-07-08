@@ -3,20 +3,22 @@ import { parseTable } from '@joshuaavalon/cheerio-table-parser';
 import * as _ from 'lodash';
 import * as css from 'css';
 import {
-  MagaAbiturientInfo,
-  IncomingsLinkType,
-  MagaOriginalInfoType,
-  AbiturientInfoStateType,
-  MagaInfoType,
   FormTrainingType,
   LevelTrainingType,
+  AbiturientInfoStateType,
+  IncomingsLink,
+  IncomingsPageInfo,
+  IncomingsPageOriginalInfo,
+  AbiturientInfo_Bachelor,
+  AbiturientInfo_Magister,
+  AbiturientInfo,
 } from '@my-interfaces';
 
-export const getIncomings = (html: string) => {
+export const parseMainIncomingsList = (html: string) => {
   const $ = cheerio.load(html);
 
   // level training files
-  const incomings: IncomingsLinkType[] = [];
+  const incomings: IncomingsLink[] = [];
 
   const levelTrainingLabels = $('body > div.listab > label');
   for (const levelLabelEl of levelTrainingLabels) {
@@ -26,7 +28,7 @@ export const getIncomings = (html: string) => {
     const levelFullName = $levelLabel.text().trim();
     const [levelName, levelType] = levelFullName.split('. ');
 
-    const specialties: IncomingsLinkType['specialties'] = [];
+    const specialties: IncomingsLink['specialties'] = [];
     const levelSpecialtyLabels = $($levelLabel.next().get(0)).find('label');
     for (const specLabelEl of levelSpecialtyLabels) {
       const $specLabel = $(specLabelEl);
@@ -95,7 +97,7 @@ const findCssRules = (style: string, property: string, value: string) => {
   return rules;
 };
 
-export const getMagaInfo = async (html: string) => {
+export const parseIncomingsInfo = async (html: string) => {
   const $ = cheerio.load(html);
 
   if (!$('body > table > tbody').get(0)) {
@@ -156,7 +158,7 @@ export const getMagaInfo = async (html: string) => {
   // ! hardcode. or smart get from table
   tbodyData.splice(0, 12);
 
-  const originalInfo: MagaOriginalInfoType = {
+  const originalInfo: IncomingsPageOriginalInfo = {
     buildDate,
     prkomDate,
     competitionGroupName,
@@ -168,7 +170,7 @@ export const getMagaInfo = async (html: string) => {
     numbersInfo,
   };
 
-  const info: MagaInfoType = {
+  const info: IncomingsPageInfo = {
     buildDate: (({ DD, MM, YYYY, time } = {}) =>
       !time ? null : new Date(`${YYYY}.${MM}.${DD} ${time}`))(
       buildDate.match(
@@ -230,7 +232,7 @@ export const getMagaInfo = async (html: string) => {
         ? null
         : Object.keys(nums).reduce(
             (p, c) => ({ ...p, [c]: Number(nums[c]) }),
-            {} as MagaInfoType['numbersInfo'],
+            {} as IncomingsPageInfo['numbersInfo'],
           ))(
       numbersInfo.match(
         /.*: (?<total>[0-9]{1,4})\..*: (?<enrolled>[0-9]{1,4})\..*: (?<toenroll>[0-9]{1,4})\.?$/i,
@@ -243,7 +245,40 @@ export const getMagaInfo = async (html: string) => {
     console.warn('Failed to parse table #2');
   }
 
-  const listApplicants: MagaAbiturientInfo[] = [];
+  let listApplicants: AbiturientInfo[] = [];
+  switch (info.levelTraining) {
+    case LevelTrainingType.Bachelor:
+      listApplicants = parseBachelor(tbodyData, titles);
+      break;
+    case LevelTrainingType.Magister:
+      listApplicants = parseMagister(tbodyData);
+      break;
+    case LevelTrainingType.Postgraduate:
+      // listApplicants = parseMaga(tbodyData);
+      break;
+  }
+
+  return {
+    originalInfo,
+    info,
+    list: listApplicants,
+  };
+};
+
+const parseBachelor = (
+  tbodyData: { isGreen: boolean; content: string }[][],
+  titles: { isGreen: boolean; content: string }[],
+) => {
+  const listApplicants: AbiturientInfo_Bachelor[] = [];
+
+  let idxStart = titles.findIndex((e) =>
+    e.content.startsWith('Сумма баллов по предметам'),
+  );
+  let idxEnd = titles.findIndex((e) =>
+    e.content.startsWith('Сумма баллов за инд'),
+  );
+  let subjectsCount = idxEnd - idxStart - 1;
+
   for (const data of tbodyData) {
     let ind = -1;
     const nextCol = () => data[++ind]?.content;
@@ -259,21 +294,17 @@ export const getMagaInfo = async (html: string) => {
       // * Сумма баллов
       totalScore: nextColNum(),
       // * Сумма баллов по предметам
-      scoreSubjects: nextColNum(),
-      // * Вступительное испытание ...
-      scoreExam: nextColNum(),
-      // // * Собеседование ...
-      // scoreInterview: nextColNum(),
+      scoreSubjectsSum: nextColNum(),
+      scoreSubjects: new Array(subjectsCount)
+        .fill(0)
+        // .map(() => nextColNum()),
+        .map(() => [nextColNum(), titles[ind]?.content]),
       // * Сумма баллов за инд.дост.(конкурсные)
       scoreCompetitive: nextColNum(),
       // * Преимущ. право
       preemptiveRight: !!nextCol(),
-      // // * Согласие на зачисление
-      // consentTransfer: !!nextCol(),
-      // // * Оригинал
-      // original: !!nextCol(),
       // * Оригинал в вузе
-      originalToUniversity: !!nextCol(),
+      originalInUniversity: !!nextCol(),
       // * Состояние
       state: ((content) =>
         content === 'Подано'.toLocaleLowerCase()
@@ -289,10 +320,57 @@ export const getMagaInfo = async (html: string) => {
       priorityHight: nextColNum(),
     });
   }
+  return listApplicants;
+};
 
-  return {
-    originalInfo: originalInfo,
-    info,
-    list: listApplicants,
-  };
+const parseMagister = (
+  tbodyData: { isGreen: boolean; content: string }[][],
+) => {
+  const listApplicants: AbiturientInfo_Magister[] = [];
+  for (const data of tbodyData) {
+    let ind = -1;
+    const nextCol = () => data[++ind]?.content;
+    const nextColNum = (val = nextCol()) =>
+      !isNaN(Number(val)) ? Number(val) : null;
+
+    listApplicants.push({
+      isGreen: data[0].isGreen,
+      // * №
+      position: nextColNum(),
+      // * Уникальный код
+      uid: nextCol(),
+      // * Сумма баллов
+      totalScore: nextColNum(),
+      // * Сумма баллов по предметам
+      scoreSubjectsSum: nextColNum(),
+      // * Вступительное испытание ...
+      scoreExam: nextColNum(),
+      // // * Собеседование ...
+      // scoreInterview: nextColNum(),
+      // * Сумма баллов за инд.дост.(конкурсные)
+      scoreCompetitive: nextColNum(),
+      // * Преимущ. право
+      preemptiveRight: !!nextCol(),
+      // // * Согласие на зачисление
+      // consentTransfer: !!nextCol(),
+      // // * Оригинал
+      // original: !!nextCol(),
+      // * Оригинал в вузе
+      originalInUniversity: !!nextCol(),
+      // * Состояние
+      state: ((content) =>
+        content === 'Подано'.toLocaleLowerCase()
+          ? AbiturientInfoStateType.Submitted
+          : content === 'Зачислен'.toLocaleLowerCase()
+          ? AbiturientInfoStateType.Enrolled
+          : AbiturientInfoStateType.Unknown)(nextCol()?.toLocaleLowerCase()),
+      // // * Согласие на др.напр.
+      // consentToanotherDirection: !!nextCol(),
+      // * Приоритет
+      priority: nextColNum(),
+      // * Высший приоритет
+      priorityHight: nextColNum(),
+    });
+  }
+  return listApplicants;
 };

@@ -39,7 +39,7 @@ export class PrKomService implements OnModuleInit {
   }
 
   public async getIncomingsList() {
-    if (this.prKomProvider.incomingsList.length > 0) {
+    if (this.prKomProvider.incomingsList.length === 0) {
       throw new BadRequestException('wait for app initialization');
     }
 
@@ -62,7 +62,7 @@ export class PrKomService implements OnModuleInit {
       throw new BadRequestException('wait for app initialization');
     }
 
-    return [...this.prKomProvider.allMagaIncomingsInfo.entries()].map(
+    return [...this.prKomProvider.allIncomingsInfo.entries()].map(
       ([filename, { isCache, response }]) => ({
         filename,
         isCache,
@@ -80,12 +80,13 @@ export class PrKomService implements OnModuleInit {
       throw new BadRequestException('wait for app initialization');
     }
 
-    const result = [...this.prKomProvider.allMagaIncomingsInfo.entries()]
+    const result = [...this.prKomProvider.allIncomingsInfo.entries()]
       .map(([filename, { response: e, isCache }]) => {
         const item = e.list.find((e) => e?.uid === uid);
         if (!item) {
           return null;
         }
+
         let afterGreens = 0;
         let beforeGreens = 0;
         for (const el of e.list) {
@@ -97,6 +98,7 @@ export class PrKomService implements OnModuleInit {
             }
           }
         }
+
         return {
           isCache,
           filename,
