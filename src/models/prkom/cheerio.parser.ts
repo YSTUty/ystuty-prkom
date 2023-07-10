@@ -206,9 +206,11 @@ export const parseIncomingsInfo = async (html: string) => {
     levelTraining: (({ type } = {}) => {
       let str = type.toLocaleLowerCase();
       switch (true) {
-        case str.startsWith('бакалавр'):
+        case str.startsWith('бакалавриат'):
           return LevelTrainingType.Bachelor;
-        case str.startsWith('магистр'):
+        case str.startsWith('специалитет'):
+          return LevelTrainingType.Specialty;
+        case str.startsWith('магистратура'):
           return LevelTrainingType.Magister;
         case str.startsWith('аспирантура'):
           return LevelTrainingType.Postgraduate;
@@ -248,13 +250,13 @@ export const parseIncomingsInfo = async (html: string) => {
   let listApplicants: AbiturientInfo[] = [];
   switch (info.levelTraining) {
     case LevelTrainingType.Bachelor:
+    case LevelTrainingType.Specialty:
       listApplicants = parseBachelor(tbodyData, titles);
       break;
     case LevelTrainingType.Magister:
+    case LevelTrainingType.Postgraduate:
       listApplicants = parseMagister(tbodyData);
       break;
-    case LevelTrainingType.Postgraduate:
-      // listApplicants = parseMaga(tbodyData);
       break;
   }
 
