@@ -2,6 +2,28 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.0.0](https://github.com/YSTUty/ystuty-prkom/compare/v0.1.0...v1.0.0) (2023-07-10)
+
+
+### 🐛 Bug Fixes
+
+* **prkom:** update parsing `levelTraining` ([a501e2e](https://github.com/YSTUty/ystuty-prkom/commit/a501e2e9e7f7d958bacd4b65bb4c5b7317ea4173))
+
+
+### 🚀 Features
+
+* **app:** add `swagger` & version prefix ([fd4c71f](https://github.com/YSTUty/ystuty-prkom/commit/fd4c71fdc5e1db34e9e042266e8309aac7a4bc3c))
+* **docker:** optimize cache layers ([2bd6bd6](https://github.com/YSTUty/ystuty-prkom/commit/2bd6bd68c41130babbdcfca853b070becf67247c))
+* **prkom:** add parse more files (`Bachelor` & `Magister`) ([2575c31](https://github.com/YSTUty/ystuty-prkom/commit/2575c3161bf8f1dcf0b7529bdd07d8d2bc06f8f4))
+
+
+### 🧹 Chore
+
+* **deps:** update `typescript` ([c4b3424](https://github.com/YSTUty/ystuty-prkom/commit/c4b3424893e3b3418072ea2707f25659e7b17b1c))
+* **env:** move param `/files` part value to `YSTU_URL` env ([8b41ee4](https://github.com/YSTUty/ystuty-prkom/commit/8b41ee45aff0233081c3d94173f620a72e9b6b1b))
+* **prkom:** add get method `fake` abitur info ([ac297c5](https://github.com/YSTUty/ystuty-prkom/commit/ac297c5e1f1cca33f8150986bbb4393abc288339))
+* **prkom:** update `404` error skip; update `ttl` ([3bd9200](https://github.com/YSTUty/ystuty-prkom/commit/3bd9200684a1ca109cad2be2678a7f448e45b378))
+
 ## 0.1.0 (2023-07-07)
 
 
