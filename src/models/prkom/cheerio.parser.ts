@@ -97,6 +97,11 @@ const findCssRules = (style: string, property: string, value: string) => {
   return rules;
 };
 
+type ParsedTableType = {
+  isGreen: boolean;
+  isRed: boolean;
+  content: string;
+};
 export const parseIncomingsInfo = async (html: string) => {
   const $ = cheerio.load(html);
 
@@ -104,17 +109,30 @@ export const parseIncomingsInfo = async (html: string) => {
     return null;
   }
 
-  let greenSelector: string = null;
+  let greenSelectors: string[] = [];
+  let redSelectors: string[] = [];
   for (const el of $('style')) {
     const css = $(el).text();
-    const rules = findCssRules(css, 'background-color', '#90ee90');
-    if (rules.length > 0) {
-      greenSelector = rules[0]?.selectors[0];
-      if (greenSelector) {
-        greenSelector = greenSelector.split('.').slice(-1)[0];
+
+    const greenRules = findCssRules(css, 'background-color', '#90ee90');
+    for (const greenRule of greenRules.filter((e) => e.type === 'rule')) {
+      let [selector] = greenRule.selectors;
+      if (selector) {
+        greenSelectors.push(selector.split('.').slice(-1)[0]);
       }
-      break;
     }
+
+    const redRules = findCssRules(css, 'color', '#a0522d');
+    for (const redRule of redRules.filter((e) => e.type === 'rule')) {
+      let [selector] = redRule.selectors;
+      if (selector) {
+        redSelectors.push(selector.split('.').slice(-1)[0]);
+      }
+    }
+
+    // if (greenSelectors.length > 0 && redSelectorsgreenSelectors.length > 0) {
+    //   break;
+    // }
   }
 
   // // to delete extra columns
@@ -124,9 +142,15 @@ export const parseIncomingsInfo = async (html: string) => {
     parser(element) {
       const content = $(element).text().trim();
       const isGreen =
-        (greenSelector && $(element).hasClass(greenSelector)) || false;
+        greenSelectors.some((e) => $(element).hasClass(e)) || false;
+      const isRed = redSelectors.some((e) => $(element).hasClass(e)) || false;
       // const classes = $(element).attr('class');
-      return content && /* classes && */ { isGreen, content /* classes */ };
+      return (content && /* classes && */ {
+        isGreen,
+        isRed,
+        content,
+        // classes,
+      }) as ParsedTableType;
     },
   });
 
@@ -268,8 +292,8 @@ export const parseIncomingsInfo = async (html: string) => {
 };
 
 const parseBachelor = (
-  tbodyData: { isGreen: boolean; content: string }[][],
-  titles: { isGreen: boolean; content: string }[],
+  tbodyData: ParsedTableType[][],
+  titles: ParsedTableType[],
 ) => {
   const listApplicants: AbiturientInfo_Bachelor[] = [];
 
@@ -289,6 +313,7 @@ const parseBachelor = (
 
     listApplicants.push({
       isGreen: data[0].isGreen,
+      isRed: data[0].isRed,
       // * №
       position: nextColNum(),
       // * Уникальный код
@@ -325,9 +350,7 @@ const parseBachelor = (
   return listApplicants;
 };
 
-const parseMagister = (
-  tbodyData: { isGreen: boolean; content: string }[][],
-) => {
+const parseMagister = (tbodyData: ParsedTableType[][]) => {
   const listApplicants: AbiturientInfo_Magister[] = [];
   for (const data of tbodyData) {
     let ind = -1;
@@ -337,6 +360,7 @@ const parseMagister = (
 
     listApplicants.push({
       isGreen: data[0].isGreen,
+      isRed: data[0].isRed,
       // * №
       position: nextColNum(),
       // * Уникальный код

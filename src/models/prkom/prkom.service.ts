@@ -131,6 +131,7 @@ export class PrKomService implements OnModuleInit {
       }),
       item: {
         isGreen: false,
+        isRed: false,
         position: _.random(1, 3),
         uid: '123-456-789 00',
         totalScore: _.random(10, 11),
