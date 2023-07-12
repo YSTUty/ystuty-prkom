@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.0.1](https://github.com/YSTUty/ystuty-prkom/compare/v1.0.0...v1.0.1) (2023-07-12)
+
+
+### 🚀 Features
+
+* **parser:** add `AbiturientInfo` param `isRed` ([0eafab4](https://github.com/YSTUty/ystuty-prkom/commit/0eafab4a757f4cc4f30af8982e3dd15126c69642))
+* **prkom:** add parsing for `Specialty` & `Postgraduate` ([95b201a](https://github.com/YSTUty/ystuty-prkom/commit/95b201a6576c96f57f9994542b292bba7f9ab941))
+
 ## [1.0.0](https://github.com/YSTUty/ystuty-prkom/compare/v0.1.0...v1.0.0) (2023-07-10)
 
 

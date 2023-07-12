@@ -1,6 +1,6 @@
 {
   "name": "ystuty-prkom",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "",
   "author": "xTCry [Vladislav Kh] (https://github.com/xTCry/)",
   "private": true,
@@ -21,9 +21,9 @@
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "prepare": "husky install",
     "release": "standard-version",
-    "release:patch": "standard-version --release-as patch",
+    "release:major": "standard-version --release-as major",
     "release:minor": "standard-version --release-as minor",
-    "release:major": "standard-version --release-as major"
+    "release:patch": "standard-version --release-as patch"
   },
   "dependencies": {
     "@joshuaavalon/cheerio-table-parser": "^2.0.3",
