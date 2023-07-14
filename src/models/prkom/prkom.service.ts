@@ -140,6 +140,7 @@ export class PrKomService implements OnModuleInit {
         scoreCompetitive: _.random(10, 11),
         preemptiveRight: false,
         originalInUniversity: true,
+        originalFromEGPU: false,
         state: 1,
         priority: 1,
         priorityHight: 0,

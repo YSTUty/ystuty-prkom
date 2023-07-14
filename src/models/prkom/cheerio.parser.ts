@@ -332,6 +332,8 @@ const parseBachelor = (
       preemptiveRight: !!nextCol(),
       // * Оригинал в вузе
       originalInUniversity: !!nextCol(),
+      // * Оригинал из ЕПГУ
+      originalFromEGPU: !!nextCol(),
       // * Состояние
       state: ((content) =>
         content === 'Подано'.toLocaleLowerCase()
@@ -383,6 +385,8 @@ const parseMagister = (tbodyData: ParsedTableType[][]) => {
       // original: !!nextCol(),
       // * Оригинал в вузе
       originalInUniversity: !!nextCol(),
+      // * Оригинал из ЕПГУ
+      originalFromEGPU: !!nextCol(),
       // * Состояние
       state: ((content) =>
         content === 'Подано'.toLocaleLowerCase()
