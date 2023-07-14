@@ -9,9 +9,10 @@ import {
   IncomingsLink,
   IncomingsPageInfo,
   IncomingsPageOriginalInfo,
+  AbiturientInfo,
+  AbiturientInfo_Base,
   AbiturientInfo_Bachelor,
   AbiturientInfo_Magister,
-  AbiturientInfo,
 } from '@my-interfaces';
 
 export const parseMainIncomingsList = (html: string) => {
@@ -279,7 +280,7 @@ export const parseIncomingsInfo = async (html: string) => {
       break;
     case LevelTrainingType.Magister:
     case LevelTrainingType.Postgraduate:
-      listApplicants = parseMagister(tbodyData);
+      listApplicants = parseMagister(tbodyData, titles);
       break;
       break;
   }
@@ -291,116 +292,138 @@ export const parseIncomingsInfo = async (html: string) => {
   };
 };
 
+const numOrNul = (val: string) => (!isNaN(Number(val)) ? Number(val) : null);
+
+const prepareType = (val: string, key?: keyof AbiturientInfo) => {
+  switch (key) {
+    // * Number or null
+    case 'position':
+    case 'totalScore':
+    case 'scoreSubjectsSum':
+    case 'scoreCompetitive':
+    case 'priority':
+    case 'priorityHight':
+      return numOrNul(val);
+    // * Bool
+    case 'preemptiveRight':
+    case 'originalInUniversity':
+    case 'originalFromEGPU':
+      return Boolean(val);
+    // * Enum
+    case 'state':
+      return ((content) =>
+        content === 'Подано'.toLocaleLowerCase()
+          ? AbiturientInfoStateType.Submitted
+          : content === 'Зачислен'.toLocaleLowerCase()
+          ? AbiturientInfoStateType.Enrolled
+          : AbiturientInfoStateType.Unknown)(val.toLocaleLowerCase());
+    // * Strings
+    case 'uid':
+    default:
+      return val;
+  }
+};
+
 const parseBachelor = (
   tbodyData: ParsedTableType[][],
   titles: ParsedTableType[],
 ) => {
   const listApplicants: AbiturientInfo_Bachelor[] = [];
 
-  let idxStart = titles.findIndex((e) =>
-    e.content.startsWith('Сумма баллов по предметам'),
-  );
-  let idxEnd = titles.findIndex((e) =>
-    e.content.startsWith('Сумма баллов за инд'),
-  );
-  let subjectsCount = idxEnd - idxStart - 1;
+  const baseIndexes = parseBaseTitleIndexes(titles);
+  const subjectsCount =
+    baseIndexes.scoreCompetitive - baseIndexes.scoreSubjectsSum - 1;
 
   for (const data of tbodyData) {
-    let ind = -1;
-    const nextCol = () => data[++ind]?.content;
-    const nextColNum = (val = nextCol()) =>
-      !isNaN(Number(val)) ? Number(val) : null;
+    const getData = (i: number, key?: keyof AbiturientInfo) =>
+      key ? (prepareType(data[i]?.content, key) as any) : data[i]?.content;
 
     listApplicants.push({
       isGreen: data[0].isGreen,
       isRed: data[0].isRed,
-      // * №
-      position: nextColNum(),
-      // * Уникальный код
-      uid: nextCol(),
-      // * Сумма баллов
-      totalScore: nextColNum(),
-      // * Сумма баллов по предметам
-      scoreSubjectsSum: nextColNum(),
-      scoreSubjects: new Array(subjectsCount)
+
+      ...(Object.fromEntries(
+        Object.entries(baseIndexes).map(
+          ([key, i]: [keyof AbiturientInfo, number]) => [key, getData(i, key)],
+        ),
+      ) as AbiturientInfo_Base),
+
+      scoreSubjects: new Array(subjectsCount > 0 ? subjectsCount : 0)
         .fill(0)
-        // .map(() => nextColNum()),
-        .map(() => [nextColNum(), titles[ind]?.content]),
-      // * Сумма баллов за инд.дост.(конкурсные)
-      scoreCompetitive: nextColNum(),
-      // * Преимущ. право
-      preemptiveRight: !!nextCol(),
-      // * Оригинал в вузе
-      originalInUniversity: !!nextCol(),
-      // * Оригинал из ЕПГУ
-      originalFromEGPU: !!nextCol(),
-      // * Состояние
-      state: ((content) =>
-        content === 'Подано'.toLocaleLowerCase()
-          ? AbiturientInfoStateType.Submitted
-          : content === 'Зачислен'.toLocaleLowerCase()
-          ? AbiturientInfoStateType.Enrolled
-          : AbiturientInfoStateType.Unknown)(nextCol()?.toLocaleLowerCase()),
-      // // * Согласие на др.напр.
-      // consentToanotherDirection: !!nextCol(),
-      // * Приоритет
-      priority: nextColNum(),
-      // * Высший приоритет
-      priorityHight: nextColNum(),
+        .map((_e, i) => [
+          numOrNul(getData(baseIndexes.scoreSubjectsSum + i + 1)),
+          titles[baseIndexes.scoreSubjectsSum + i + 1]?.content,
+        ]),
     });
   }
   return listApplicants;
 };
 
-const parseMagister = (tbodyData: ParsedTableType[][]) => {
+const parseMagister = (
+  tbodyData: ParsedTableType[][],
+  titles: ParsedTableType[],
+) => {
   const listApplicants: AbiturientInfo_Magister[] = [];
+
+  const findIndex = makeFindIndex(titles);
+  const baseIndexes = parseBaseTitleIndexes(titles);
+
   for (const data of tbodyData) {
-    let ind = -1;
-    const nextCol = () => data[++ind]?.content;
-    const nextColNum = (val = nextCol()) =>
-      !isNaN(Number(val)) ? Number(val) : null;
+    const getData = (i: number, key?: keyof AbiturientInfo) =>
+      key ? (prepareType(data[i]?.content, key) as any) : data[i]?.content;
 
     listApplicants.push({
       isGreen: data[0].isGreen,
       isRed: data[0].isRed,
-      // * №
-      position: nextColNum(),
-      // * Уникальный код
-      uid: nextCol(),
-      // * Сумма баллов
-      totalScore: nextColNum(),
-      // * Сумма баллов по предметам
-      scoreSubjectsSum: nextColNum(),
-      // * Вступительное испытание ...
-      scoreExam: nextColNum(),
-      // // * Собеседование ...
-      // scoreInterview: nextColNum(),
-      // * Сумма баллов за инд.дост.(конкурсные)
-      scoreCompetitive: nextColNum(),
-      // * Преимущ. право
-      preemptiveRight: !!nextCol(),
-      // // * Согласие на зачисление
-      // consentTransfer: !!nextCol(),
-      // // * Оригинал
-      // original: !!nextCol(),
-      // * Оригинал в вузе
-      originalInUniversity: !!nextCol(),
-      // * Оригинал из ЕПГУ
-      originalFromEGPU: !!nextCol(),
-      // * Состояние
-      state: ((content) =>
-        content === 'Подано'.toLocaleLowerCase()
-          ? AbiturientInfoStateType.Submitted
-          : content === 'Зачислен'.toLocaleLowerCase()
-          ? AbiturientInfoStateType.Enrolled
-          : AbiturientInfoStateType.Unknown)(nextCol()?.toLocaleLowerCase()),
-      // // * Согласие на др.напр.
-      // consentToanotherDirection: !!nextCol(),
-      // * Приоритет
-      priority: nextColNum(),
-      // * Высший приоритет
-      priorityHight: nextColNum(),
+
+      ...(Object.fromEntries(
+        Object.entries(baseIndexes).map(
+          ([key, i]: [keyof AbiturientInfo, number]) => [key, getData(i, key)],
+        ),
+      ) as AbiturientInfo_Base),
+
+      scoreExam: findIndex('Вступительное испытание'),
     });
   }
   return listApplicants;
+};
+
+const makeFindIndex = (titles: ParsedTableType[]) => {
+  const preparedTitles = titles
+    .map((e) => e.content?.toLocaleLowerCase().trim().replace(/\s/g, '_'))
+    .filter(Boolean);
+
+  return (str: string, strict = false) => {
+    // fix differnet Windows-1252 & UTF-8 spaces
+    str = str.replace(/\s/g, '_');
+    return ((e) => (e === -1 ? null : e))(
+      preparedTitles.findIndex(
+        (e) =>
+          (!strict && e.startsWith(str.toLocaleLowerCase())) ||
+          e === str.toLocaleLowerCase(),
+      ),
+    );
+  };
+};
+
+const parseBaseTitleIndexes = (titles: ParsedTableType[]) => {
+  const findIndex = makeFindIndex(titles);
+
+  const indexes: Record<
+    keyof Omit<AbiturientInfo_Base, 'isRed' | 'isGreen'>,
+    number
+  > = {
+    position: findIndex('№', true),
+    uid: findIndex('Уникальный код'),
+    totalScore: findIndex('Сумма баллов'),
+    scoreSubjectsSum: findIndex('Сумма баллов по предметам'),
+    scoreCompetitive: findIndex('Сумма баллов за инд.дост.'),
+    preemptiveRight: findIndex('преимущ.право'),
+    originalInUniversity: findIndex('Оригинал в вузе'),
+    originalFromEGPU: findIndex('Оригинал из ЕПГУ'),
+    state: findIndex('Состояние'),
+    priority: findIndex('Приоритет'),
+    priorityHight: findIndex('Высший приоритет'),
+  };
+  return indexes;
 };

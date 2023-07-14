@@ -208,13 +208,16 @@ export class PrKomProvider {
 
       const response = await cheerioParser.parseIncomingsInfo(data);
       return response ? { isCache, response } : null;
-    } catch (error) {
-      if (error instanceof AxiosError) {
-        if (error.response?.status === 404) {
+    } catch (err) {
+      if (err instanceof AxiosError) {
+        if (err.response?.status === 404) {
           return null;
         }
       }
-      this.logger.error('parseIncomingsInfo', error, filename);
+      // this.logger.error('parseIncomingsInfo', err, filename);
+      if (err instanceof Error) {
+        this.logger.error(err, err.stack, 'parseIncomingsInfo');
+      }
       return null;
     }
   }
