@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.0.2](https://github.com/YSTUty/ystuty-prkom/compare/v1.0.1...v1.0.2) (2023-07-14)
+
+
+### 🧹 Chore
+
+* **parser:** add `originalFromEGPU` param to `AbiturientInfo` ([bc24416](https://github.com/YSTUty/ystuty-prkom/commit/bc24416ef45b7f734530f261e25d8bef3633bf33))
+
+
+### 🚀 Features
+
+* **parser:** improve safe column parsing ([e9fb5ab](https://github.com/YSTUty/ystuty-prkom/commit/e9fb5abfa7ad32bc10bf41f6e5cf2b4973058644))
+
 ### [1.0.1](https://github.com/YSTUty/ystuty-prkom/compare/v1.0.0...v1.0.1) (2023-07-12)
 
 
