@@ -3,6 +3,8 @@ import { Logger, VersioningType } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import * as basicAuth from 'express-basic-auth';
 import * as swStats from 'swagger-stats';
+import * as compression from 'compression';
+import * as cors from 'cors';
 import { AppModule } from './models/app/app.module';
 
 import * as xEnv from '@my-environment';
@@ -15,6 +17,9 @@ async function bootstrap() {
     type: VersioningType.URI,
     defaultVersion: '1',
   });
+
+  app.use(compression());
+  app.use(cors());
 
   app.useGlobalPipes(new ValidationHttpPipe({ transform: true }));
   app.useGlobalFilters(new HttpExceptionFilter());
