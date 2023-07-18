@@ -65,7 +65,7 @@ export class PrKomService implements OnModuleInit {
     };
   }
 
-  public async getList(showOriginalInfo = false) {
+  public async getAllIncomingsInfoList(showOriginalInfo = false) {
     if (!this.isLoaded) {
       throw new BadRequestException('wait for app initialization');
     }
@@ -77,10 +77,34 @@ export class PrKomService implements OnModuleInit {
         response: {
           info: response.info,
           list: response.list,
+          titles: response.titles,
           ...(showOriginalInfo && { originalInfo: response.originalInfo }),
         },
       }),
     );
+  }
+
+  public async getIncomingsInfoListByFile(
+    filename: string,
+    showOriginalInfo = false,
+  ) {
+    if (!this.isLoaded) {
+      throw new BadRequestException('wait for app initialization');
+    }
+
+    const { isCache, response } =
+      this.prKomProvider.allIncomingsInfo.get(filename);
+
+    return {
+      filename,
+      isCache,
+      response: {
+        info: response.info,
+        list: response.list,
+        titles: response.titles,
+        ...(showOriginalInfo && { originalInfo: response.originalInfo }),
+      },
+    };
   }
 
   public async getByFake(showOriginalInfo = false) {

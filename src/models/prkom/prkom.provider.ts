@@ -6,8 +6,8 @@ import * as _ from 'lodash';
 
 import { cacheManager, md5 } from '@my-common';
 import * as xEnv from '@my-environment';
-import * as cheerioParser from './cheerio.parser';
 import { IncomingsLink, AbiturientCachedInfo } from '@my-interfaces';
+import * as cheerioParser from './cheerio.parser';
 
 const COOKIES_FILE = 'cookies';
 
