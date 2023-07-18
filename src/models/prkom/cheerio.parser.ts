@@ -282,13 +282,17 @@ export const parseIncomingsInfo = async (html: string) => {
     case LevelTrainingType.Postgraduate:
       listApplicants = parseMagister(tbodyData, titles);
       break;
-      break;
   }
+
+  const preparedTitles = titles
+    .map((e) => e.content?.trim().replace(/\s/g, ' '))
+    .filter(Boolean);
 
   return {
     originalInfo,
     info,
     list: listApplicants,
+    titles: preparedTitles,
   };
 };
 

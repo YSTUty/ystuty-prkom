@@ -195,5 +195,6 @@ export type AbiturientCachedInfo = {
     info: IncomingsPageInfo;
     originalInfo: IncomingsPageOriginalInfo;
     list: AbiturientInfo[];
+    titles: string[];
   };
 };
