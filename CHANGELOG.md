@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.0.3](https://github.com/YSTUty/ystuty-prkom/compare/v1.0.2...v1.0.3) (2023-07-18)
+
+
+### 🧹 Chore
+
+* **app:** add `cors` & `compression` ([a631e5c](https://github.com/YSTUty/ystuty-prkom/commit/a631e5cf7b72893cfdd59d67698ba4dd0199cf27))
+* **parser:** return `titles` from `parseIncomingsInfo` ([2dff227](https://github.com/YSTUty/ystuty-prkom/commit/2dff2273513fb4fd7dbcc16e78e6b44184450e25))
+* **prkom:** add split `full_list` to `all_full_list` as many items & `full_list` by filename ([68a9a51](https://github.com/YSTUty/ystuty-prkom/commit/68a9a51741e9cceb77f87ead8357c417d2b30cc6))
+
 ### [1.0.2](https://github.com/YSTUty/ystuty-prkom/compare/v1.0.1...v1.0.2) (2023-07-14)
 
 
