@@ -13,6 +13,7 @@ import {
   AbiturientInfo_Base,
   AbiturientInfo_Bachelor,
   AbiturientInfo_Magister,
+  AbiturientInfoComb,
 } from '@my-interfaces';
 
 export const parseMainIncomingsList = (html: string) => {
@@ -298,7 +299,7 @@ export const parseIncomingsInfo = async (html: string) => {
 
 const numOrNul = (val: string) => (!isNaN(Number(val)) ? Number(val) : null);
 
-const prepareType = (val: string, key?: keyof AbiturientInfo) => {
+const prepareType = (val: string, key?: keyof AbiturientInfoComb) => {
   switch (key) {
     // * Number or null
     case 'position':
@@ -371,9 +372,10 @@ const parseMagister = (
 
   const findIndex = makeFindIndex(titles);
   const baseIndexes = parseBaseTitleIndexes(titles);
+  const scoreExamIndex = findIndex('Вступительное испытание');
 
   for (const data of tbodyData) {
-    const getData = (i: number, key?: keyof AbiturientInfo) =>
+    const getData = (i: number, key?: keyof AbiturientInfoComb) =>
       key ? (prepareType(data[i]?.content, key) as any) : data[i]?.content;
 
     listApplicants.push({
@@ -386,7 +388,7 @@ const parseMagister = (
         ),
       ) as AbiturientInfo_Base),
 
-      scoreExam: findIndex('Вступительное испытание'),
+      scoreExam: getData(scoreExamIndex, 'scoreExam') || null,
     });
   }
   return listApplicants;

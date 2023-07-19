@@ -147,6 +147,8 @@ export type IncomingsPageInfo = {
 };
 
 export type AbiturientInfo = AbiturientInfo_Bachelor | AbiturientInfo_Magister;
+export type AbiturientInfoComb = AbiturientInfo_Bachelor &
+  AbiturientInfo_Magister;
 
 export type AbiturientInfo_Base = {
   /** Выделен зеленым */
