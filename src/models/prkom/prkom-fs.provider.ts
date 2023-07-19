@@ -3,6 +3,7 @@ import * as _ from 'lodash';
 import * as chokidar from 'chokidar';
 import * as Fs from 'fs-extra';
 import * as Path from 'path';
+import * as xEnv from '@my-environment';
 
 import * as cheerioParser from './cheerio.parser';
 import { PrKomBaseProvider } from './prkom-base.provider';
@@ -63,6 +64,8 @@ export class PrKomFsProvider extends PrKomBaseProvider {
   }
 
   public async onFilesWatchLoop() {
+    const useSysWatch = xEnv.USE_SYS_FW_WATCHER;
+
     const onFileEvent = async (path: string, stats?: Fs.Stats) => {
       if (
         !this.filesWatcherPower ||
@@ -87,19 +90,23 @@ export class PrKomFsProvider extends PrKomBaseProvider {
       this.loadedFiles = this.allIncomingsInfo.size;
     };
 
-    const watcher = chokidar
-      .watch('./prkom_svod/', {
-        depth: 1,
-      })
-      .on('change', onFileEvent)
-      .on('add', onFileEvent);
+    let watcher: chokidar.FSWatcher | undefined;
+    if (useSysWatch) {
+      watcher = chokidar
+        .watch('./prkom_svod/', {
+          depth: 1,
+          usePolling: false,
+        })
+        .on('change', onFileEvent)
+        .on('add', onFileEvent);
+    }
 
     do {
       if (!this.filesWatcherPower) {
         break;
       }
 
-      if (false) {
+      if (useSysWatch !== true) {
         this.logger.debug('[onFilesWatch] execute loop');
         await this.loadListOfIncoming();
 
@@ -120,12 +127,12 @@ export class PrKomFsProvider extends PrKomBaseProvider {
           this.logger.log(
             `[onFilesWatch] All done. Waiting for next update...`,
           );
-          await new Promise((resolve) => setTimeout(resolve, 8 * 60 * 1e3));
+          await new Promise((resolve) => setTimeout(resolve, 4 * 60 * 1e3));
         }
       }
       await new Promise((resolve) => setImmediate(resolve));
     } while (this.filesWatcherPower);
 
-    watcher.unwatch('./prkom_svod/');
+    watcher?.unwatch('./prkom_svod/');
   }
 }

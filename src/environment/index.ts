@@ -24,5 +24,10 @@ export const YSTU_URL: string =
   process.env.YSTU_URL || 'https://www.ystu.ru/files';
 
 // * Swagger
-export const SWAGGER_ACCESS_USERNAME: string = process.env.SWAGGER_ACCESS_USERNAME || '';
-export const SWAGGER_ACCESS_PASSWORD: string = process.env.SWAGGER_ACCESS_PASSWORD || '';
+export const SWAGGER_ACCESS_USERNAME: string =
+  process.env.SWAGGER_ACCESS_USERNAME || '';
+export const SWAGGER_ACCESS_PASSWORD: string =
+  process.env.SWAGGER_ACCESS_PASSWORD || '';
+
+export const USE_SYS_FW_WATCHER: boolean =
+  process.env.USE_SYS_FW_WATCHER !== 'false';
