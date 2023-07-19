@@ -14,6 +14,7 @@ services:
     volumes:
       - ./.env:/home/node/app/.env
       - ./.cache-store:/home/node/app/.cache-store
+      - ${PATH_PRKOM_SVOD:-./prkom_svod}:/home/node/app/prkom_svod
     networks:
       - ystuty_network
     restart: unless-stopped

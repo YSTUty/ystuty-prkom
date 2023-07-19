@@ -1,32 +1,25 @@
+import { Injectable } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
-import { Injectable, Logger } from '@nestjs/common';
 import { AxiosRequestConfig, AxiosResponse, Method, AxiosError } from 'axios';
 import { firstValueFrom } from 'rxjs';
 import * as _ from 'lodash';
 
 import { cacheManager, md5 } from '@my-common';
 import * as xEnv from '@my-environment';
-import { IncomingsLink, AbiturientCachedInfo } from '@my-interfaces';
+import { PrKomBaseProvider } from './prkom-base.provider';
 import * as cheerioParser from './cheerio.parser';
 
 const COOKIES_FILE = 'cookies';
 
 @Injectable()
-export class PrKomProvider {
-  private readonly logger = new Logger(PrKomProvider.name);
-
+export class PrKomWebProvider extends PrKomBaseProvider {
   public blockedTime: number = 0;
+  public queueUpdatingFiles: string[] = [];
   private cookies: Record<string, any> = null;
 
-  public incomingsList: IncomingsLink[] = [];
-  public loadedFiles: number = -1;
-  public filesWatcherPower = false;
-
-  public queueUpdatingFiles: string[] = [];
-
-  public allIncomingsInfo = new Map<string, AbiturientCachedInfo>();
-
   constructor(private readonly httpService: HttpService) {
+    super();
+
     httpService.axiosRef.defaults.baseURL = xEnv.YSTU_URL;
 
     httpService.axiosRef.defaults.headers[
@@ -59,7 +52,7 @@ export class PrKomProvider {
       this.cookies = cookies || {};
     }
 
-    await this.loadListOfIncoming();
+    return super.init();
   }
 
   public fetch(
@@ -183,7 +176,7 @@ export class PrKomProvider {
 
   //
 
-  private async loadListOfIncoming() {
+  protected async loadListOfIncoming() {
     try {
       const prkom_svod_Response = await this.fetch('/prkom_svod/listab1.htm', {
         useCache: true,
@@ -194,9 +187,11 @@ export class PrKomProvider {
         prkom_svod_Response.data,
       );
       this.loadedFiles = 0;
+      return true;
     } catch (err) {
       this.logger.error(err);
     }
+    return false;
   }
 
   public async getIncomingsInfo(filename: string, cacheTtl = 1e3 * 60 * 7) {
@@ -222,24 +217,7 @@ export class PrKomProvider {
     }
   }
 
-  public get incomingsFilesWithInfo() {
-    return this.incomingsList.flatMap((e) =>
-      e.specialties.filter(Boolean).flatMap((e) => e.files),
-    );
-  }
-
-  public get incomingsFileNames() {
-    return this.incomingsFilesWithInfo.map((e) => e.filename);
-  }
-
-  public async processFilesWatcher() {
-    if (this.filesWatcherPower) {
-      return false;
-    }
-
-    this.filesWatcherPower = true;
-    this.logger.log('[processFilesWatcher] Run');
-
+  public async onFilesWatchLoop() {
     do {
       this.logger.debug('[processFilesWatcher] execute loop');
       if (this.queueUpdatingFiles.length === 0) {
@@ -281,6 +259,5 @@ export class PrKomProvider {
       }
       await new Promise((resolve) => setImmediate(resolve));
     } while (this.filesWatcherPower);
-    this.logger.log('[processFilesWatcher] Stoped');
   }
 }

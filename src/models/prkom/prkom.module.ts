@@ -2,7 +2,8 @@ import { HttpModule } from '@nestjs/axios';
 import { Module } from '@nestjs/common';
 
 import { PrKomController } from './prkom.controller';
-import { PrKomProvider } from './prkom.provider';
+import { PrKomFsProvider } from './prkom-fs.provider';
+import { PrKomWebProvider } from './prkom-web.provider';
 import { PrKomService } from './prkom.service';
 
 @Module({
@@ -13,7 +14,7 @@ export class PrKomModule {
     return {
       module: PrKomModule,
       controllers: [PrKomController],
-      providers: [PrKomService, PrKomProvider],
+      providers: [PrKomService, PrKomFsProvider, PrKomWebProvider],
       exports: [PrKomService],
     };
   }

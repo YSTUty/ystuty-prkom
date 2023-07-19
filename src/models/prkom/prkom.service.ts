@@ -13,29 +13,40 @@ import {
   LevelTrainingType,
 } from '@my-interfaces';
 
-import { PrKomProvider } from './prkom.provider';
+import { PrKomFsProvider } from './prkom-fs.provider';
+import { PrKomWebProvider } from './prkom-web.provider';
 
 @Injectable()
 export class PrKomService implements OnModuleInit {
   private readonly logger = new Logger(PrKomService.name);
+  public isFsProvider = false;
 
-  constructor(private readonly prKomProvider: PrKomProvider) {}
+  constructor(
+    private readonly prKomFsProvider: PrKomFsProvider,
+    private readonly prKomWebProvider: PrKomWebProvider,
+  ) {}
 
   public isLoaded = false;
 
   async onModuleInit() {
     this.logger.log('Start initializing provider...');
-    await this.prKomProvider.init();
-    this.logger.log('Initializing provider finished');
 
-    this.init().then();
-  }
+    if (true) {
+      this.isFsProvider = await this.prKomFsProvider.init();
+    }
 
-  public async init() {
-    // ...
-    this.isLoaded = true;
+    if (!this.isFsProvider) {
+      await this.prKomWebProvider.init();
+    }
 
     this.prKomProvider.processFilesWatcher().then();
+    this.logger.log('Initializing provider finished');
+
+    this.isLoaded = true;
+  }
+
+  public get prKomProvider() {
+    return this.isFsProvider ? this.prKomFsProvider : this.prKomWebProvider;
   }
 
   public async getFiles() {
@@ -57,11 +68,20 @@ export class PrKomService implements OnModuleInit {
   public async getInfo() {
     return {
       isLoaded: this.isLoaded,
-      blockedTime: this.prKomProvider.blockedTime,
-      filesWatcherPower: this.prKomProvider.filesWatcherPower,
       loadedFiles: this.prKomProvider.loadedFiles,
-      queueUpdatingFiles: this.prKomProvider.queueUpdatingFiles,
-      queueUpdatingFilesLen: this.prKomProvider.queueUpdatingFiles.length,
+
+      blockedTime: !this.isFsProvider
+        ? this.prKomWebProvider.blockedTime
+        : null,
+      filesWatcherPower: !this.isFsProvider
+        ? this.prKomWebProvider.filesWatcherPower
+        : null,
+      queueUpdatingFiles: !this.isFsProvider
+        ? this.prKomWebProvider.queueUpdatingFiles
+        : null,
+      queueUpdatingFilesLen: !this.isFsProvider
+        ? this.prKomWebProvider.queueUpdatingFiles.length
+        : null,
     };
   }
 
@@ -222,6 +242,10 @@ export class PrKomService implements OnModuleInit {
   }
 
   public async onAction(action: string) {
+    if (this.isFsProvider) {
+      return 'is not web provider';
+    }
+
     switch (action) {
       case 'stop':
         this.prKomProvider.filesWatcherPower = false;
