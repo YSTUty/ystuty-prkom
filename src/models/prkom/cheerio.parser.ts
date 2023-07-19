@@ -354,7 +354,7 @@ const prepareType = (val: string, key?: keyof AbiturientInfoComb) => {
           ? AbiturientInfoStateType.Submitted
           : content === 'Зачислен'.toLocaleLowerCase()
           ? AbiturientInfoStateType.Enrolled
-          : AbiturientInfoStateType.Unknown)(val.toLocaleLowerCase());
+          : AbiturientInfoStateType.Unknown)(val?.toLocaleLowerCase());
     // * Strings
     case 'uid':
     default:
