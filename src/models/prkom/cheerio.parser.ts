@@ -22,12 +22,15 @@ export const parseMainIncomingsList = (html: string) => {
   // level training files
   const incomings: IncomingsLink[] = [];
 
+  const getPrepareText = ($el: cheerio.Cheerio<cheerio.Element>) =>
+    $el.text().replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
+
   const levelTrainingLabels = $('body > div.listab > label');
   for (const levelLabelEl of levelTrainingLabels) {
     const $levelLabel = $(levelLabelEl);
 
     const levelId = $levelLabel.attr('for');
-    const levelFullName = $levelLabel.text().trim();
+    const levelFullName = getPrepareText($levelLabel);
     const [levelName, levelType] = levelFullName.split('. ');
 
     const specialties: IncomingsLink['specialties'] = [];
@@ -36,32 +39,59 @@ export const parseMainIncomingsList = (html: string) => {
       const $specLabel = $(specLabelEl);
 
       const specialtyId = $specLabel.attr('for');
-      const specialtyFullName = $specLabel.text().trim();
+      const specialtyFullName = getPrepareText($specLabel);
       const [specialtyCode, ...restWords] = specialtyFullName.split(' ');
       const specialtyName = restWords.join(' ');
 
-      const specialtyLinks = $($specLabel.next().get(0)).find('a');
+      const specialtyTable = $($specLabel.next().get(0)).find('table').get(0);
       const files: {
         name: string;
         filename: string;
+        countPlaces: number;
+        countApplications: number;
+        countEnrolled: number;
       }[] = [];
-      for (const linkEl of specialtyLinks) {
-        //
-        const $link = $(linkEl);
 
-        const linkName = $link.text().trim();
-        const linkHref = $link.attr('href');
+      let tbodyData = parseTable(specialtyTable, {
+        parser(element) {
+          const $el = $(element);
+          const content = getPrepareText($el);
+
+          return (
+            content && {
+              content,
+              ...($el.has('a') && { link: $el.find('a').attr('href') }),
+            }
+          );
+        },
+      });
+
+      if (tbodyData.length === 0) {
+        continue;
+      }
+      const [titles, ...rows] = tbodyData;
+      const findIndex = makeFindIndex(titles);
+      const groupNameIndex = findIndex('Конкурсные группы');
+      const countPlacesIndex = findIndex('Мест');
+      const countApplicationsIndex = findIndex('Заявлений');
+      const countEnrolledIndex = findIndex('Зачислено');
+
+      for (const row of rows) {
+        const getData = (i: number) => row[i]?.content;
 
         files.push({
-          name: linkName,
-          filename: linkHref,
+          name: row[groupNameIndex].content,
+          filename: row[groupNameIndex].link,
+          countPlaces: numOrNul(getData(countPlacesIndex)),
+          countApplications: numOrNul(getData(countApplicationsIndex)),
+          countEnrolled: numOrNul(getData(countEnrolledIndex)),
         });
       }
 
       specialties.push({
         id: specialtyId,
         code: specialtyCode,
-        name: specialtyName,
+        name: specialtyName.replace(/\.+$/, '').trim(),
         fullName: specialtyFullName,
         files,
       });
@@ -69,9 +99,9 @@ export const parseMainIncomingsList = (html: string) => {
 
     incomings.push({
       id: levelId,
-      name: levelName,
+      name: levelName.replace(/\.+$/, '').trim(),
       fullName: levelFullName,
-      levelType,
+      levelType: levelType.replace(/\.+$/, '').trim(),
       specialties,
     });
   }
@@ -99,11 +129,14 @@ const findCssRules = (style: string, property: string, value: string) => {
   return rules;
 };
 
-type ParsedTableType = {
-  isGreen: boolean;
-  isRed: boolean;
+type ParsedTable = {
   content: string;
 };
+type ParsedTableIncomings = ParsedTable & {
+  isGreen?: boolean;
+  isRed?: boolean;
+};
+
 export const parseIncomingsInfo = async (html: string) => {
   const $ = cheerio.load(html);
 
@@ -152,7 +185,7 @@ export const parseIncomingsInfo = async (html: string) => {
         isRed,
         content,
         // classes,
-      }) as ParsedTableType;
+      }) as ParsedTableIncomings;
     },
   });
 
@@ -330,8 +363,8 @@ const prepareType = (val: string, key?: keyof AbiturientInfoComb) => {
 };
 
 const parseBachelor = (
-  tbodyData: ParsedTableType[][],
-  titles: ParsedTableType[],
+  tbodyData: ParsedTableIncomings[][],
+  titles: ParsedTableIncomings[],
 ) => {
   const listApplicants: AbiturientInfo_Bachelor[] = [];
 
@@ -365,8 +398,8 @@ const parseBachelor = (
 };
 
 const parseMagister = (
-  tbodyData: ParsedTableType[][],
-  titles: ParsedTableType[],
+  tbodyData: ParsedTableIncomings[][],
+  titles: ParsedTableIncomings[],
 ) => {
   const listApplicants: AbiturientInfo_Magister[] = [];
 
@@ -394,7 +427,7 @@ const parseMagister = (
   return listApplicants;
 };
 
-const makeFindIndex = (titles: ParsedTableType[]) => {
+const makeFindIndex = (titles: ParsedTable[]) => {
   const preparedTitles = titles
     .map((e) => e.content?.toLocaleLowerCase().trim().replace(/\s/g, '_'))
     .filter(Boolean);
@@ -412,7 +445,7 @@ const makeFindIndex = (titles: ParsedTableType[]) => {
   };
 };
 
-const parseBaseTitleIndexes = (titles: ParsedTableType[]) => {
+const parseBaseTitleIndexes = (titles: ParsedTableIncomings[]) => {
   const findIndex = makeFindIndex(titles);
 
   const indexes: Record<

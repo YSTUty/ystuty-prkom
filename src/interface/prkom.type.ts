@@ -53,6 +53,24 @@ export type IncomingsLink = {
        * @example `232_Stroitelstvo_ZFO_platno_PO.html`
        */
       filename: string;
+      /**
+       * Количество мест
+       *
+       * @example 15
+       */
+      countPlaces: number;
+      /**
+       * Количество заявлений
+       *
+       * @example 8
+       */
+      countApplications: number;
+      /**
+       * Количество зачислений
+       *
+       * @example 0
+       */
+      countEnrolled: number;
     }[];
   }[];
 };
