@@ -2,6 +2,27 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.0.4](https://github.com/YSTUty/ystuty-prkom/compare/v1.0.3...v1.0.4) (2023-07-19)
+
+
+### 🐛 Bug Fixes
+
+* **parser:** fix field `scoreExam` value ([6cea2bf](https://github.com/YSTUty/ystuty-prkom/commit/6cea2bfe4903d50bb21dfaa71b0a3a07fa850a30))
+* **prkom:** no read empty files in fs provider ([21d0281](https://github.com/YSTUty/ystuty-prkom/commit/21d02819f2a12e3b7ed1c8bb28875ea1ab0819e5))
+
+
+### 🚀 Features
+
+* **parser:** parsing incomings list tables additional info (counts) ([35e52cb](https://github.com/YSTUty/ystuty-prkom/commit/35e52cb193e781e9be7c2990bb04d2eb128cd30e))
+* **prkom:** add local fs provider for `prkom_svod` folder; split to web provider ([334da04](https://github.com/YSTUty/ystuty-prkom/commit/334da04468612a28ae4081426024a2ebbf65b32f))
+
+
+### 🧹 Chore
+
+* **parser:** update for compatibility ([cb5d85f](https://github.com/YSTUty/ystuty-prkom/commit/cb5d85ff542c6c8c0ffa288402bfbd02da40c85a))
+* **prkom:** check incomings info file exists ([8441272](https://github.com/YSTUty/ystuty-prkom/commit/8441272da6715f8e4617d255fc2c8d495808dab1))
+* **prkom:** watch only `html` files in fs provider ([e1b9411](https://github.com/YSTUty/ystuty-prkom/commit/e1b9411b7c2b3943009c42b8191ccb310226aa29))
+
 ### [1.0.3](https://github.com/YSTUty/ystuty-prkom/compare/v1.0.2...v1.0.3) (2023-07-18)
 
 
