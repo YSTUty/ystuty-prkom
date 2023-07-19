@@ -19,9 +19,9 @@ export class PrKomFsProvider extends PrKomBaseProvider {
 
     try {
       const stat = await Fs.stat('./prkom_svod/listab1.htm');
-      this.logger.log(`Stat [listab1.htm]: ${stat.mtime}`);
+      this.logger.log(`Stat [listab1.htm]: ${stat.size}; ${stat.mtime}`);
     } catch (err) {
-      console.log(err);
+      this.logger.error(err);
       return false;
     }
 
@@ -29,7 +29,7 @@ export class PrKomFsProvider extends PrKomBaseProvider {
       const listab1 = await Fs.readFile('./prkom_svod/listab1.htm', 'utf-8');
 
       this.incomingsList = cheerioParser.parseMainIncomingsList(listab1);
-      this.loadedFiles = 0;
+      // this.loadedFiles = 0;
       return true;
     } catch (err) {
       this.logger.error(err);
@@ -40,10 +40,10 @@ export class PrKomFsProvider extends PrKomBaseProvider {
   public async getIncomingsInfo(filename: string) {
     try {
       const stat = await Fs.stat(`./prkom_svod/${filename}`);
-      this.logger.log(`Stat [listab1.htm]: ${stat.mtime}`);
+      this.logger.log(`Stat [${filename}]: ${stat.size}; ${stat.mtime}`);
     } catch (err) {
       if (err.code !== 'ENOENT') {
-        console.log(err);
+        this.logger.error(err);
       }
       return null;
     }
@@ -63,8 +63,8 @@ export class PrKomFsProvider extends PrKomBaseProvider {
   }
 
   public async onFilesWatchLoop() {
-    const onFileEvent = async (path: string) => {
-      if (!this.filesWatcherPower) {
+    const onFileEvent = async (path: string, stats?: Fs.Stats) => {
+      if (!this.filesWatcherPower || stats?.size === 0) {
         return;
       }
 
