@@ -422,7 +422,7 @@ const parseBaseTitleIndexes = (titles: ParsedTableType[]) => {
     totalScore: findIndex('Сумма баллов'),
     scoreSubjectsSum: findIndex('Сумма баллов по предметам'),
     scoreCompetitive: findIndex('Сумма баллов за инд.дост.'),
-    preemptiveRight: findIndex('преимущ.право'),
+    preemptiveRight: findIndex('Есть преимущественное право'),
     originalInUniversity: findIndex('Оригинал в вузе'),
     originalFromEGPU: findIndex('Оригинал из ЕПГУ'),
     state: findIndex('Состояние'),
