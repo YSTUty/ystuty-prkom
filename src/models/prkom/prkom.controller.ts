@@ -3,6 +3,7 @@ import {
   Controller,
   DefaultValuePipe,
   Get,
+  NotFoundException,
   Param,
   Query,
 } from '@nestjs/common';
@@ -28,10 +29,14 @@ export class PrKomController {
     @Query('filename') filename: string,
     @Query('original', new DefaultValuePipe(false)) original?: boolean,
   ) {
-    return await this.prKomService.getIncomingsInfoListByFile(
+    const response = await this.prKomService.getIncomingsInfoListByFile(
       filename,
       original,
     );
+    if (!response) {
+      throw new NotFoundException('Incomings info file not found');
+    }
+    return response;
   }
 
   @Get('incomings_list')

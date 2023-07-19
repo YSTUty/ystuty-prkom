@@ -92,6 +92,10 @@ export class PrKomService implements OnModuleInit {
       throw new BadRequestException('wait for app initialization');
     }
 
+    if (!this.prKomProvider.allIncomingsInfo.has(filename)) {
+      return false;
+    }
+
     const { isCache, response } =
       this.prKomProvider.allIncomingsInfo.get(filename);
 
