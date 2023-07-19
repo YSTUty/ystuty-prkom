@@ -64,7 +64,11 @@ export class PrKomFsProvider extends PrKomBaseProvider {
 
   public async onFilesWatchLoop() {
     const onFileEvent = async (path: string, stats?: Fs.Stats) => {
-      if (!this.filesWatcherPower || stats?.size === 0) {
+      if (
+        !this.filesWatcherPower ||
+        stats?.size === 0 ||
+        !/\.html?$/.test(path)
+      ) {
         return;
       }
 
@@ -84,7 +88,9 @@ export class PrKomFsProvider extends PrKomBaseProvider {
     };
 
     const watcher = chokidar
-      .watch('./prkom_svod/')
+      .watch('./prkom_svod/', {
+        depth: 1,
+      })
       .on('change', onFileEvent)
       .on('add', onFileEvent);
 
