@@ -191,7 +191,7 @@ export class PrKomService implements OnModuleInit {
         originalFromEGPU: false,
         state: 1,
         priority: 1,
-        priorityHight: 0,
+        isHightPriority: true,
       },
       payload: { afterGreens: 0, beforeGreens: 0, totalItems: 12 },
     });

@@ -340,12 +340,12 @@ const prepareType = (val: string, key?: keyof AbiturientInfoComb) => {
     case 'scoreSubjectsSum':
     case 'scoreCompetitive':
     case 'priority':
-    case 'priorityHight':
       return numOrNul(val);
     // * Bool
     case 'preemptiveRight':
     case 'originalInUniversity':
     case 'originalFromEGPU':
+    case 'isHightPriority':
       return Boolean(val);
     // * Enum
     case 'state':
@@ -462,7 +462,7 @@ const parseBaseTitleIndexes = (titles: ParsedTableIncomings[]) => {
     originalFromEGPU: findIndex('Оригинал из ЕПГУ'),
     state: findIndex('Состояние'),
     priority: findIndex('Приоритет'),
-    priorityHight: findIndex('Высший приоритет'),
+    isHightPriority: findIndex('Это высший приоритет'),
   };
   return indexes;
 };
