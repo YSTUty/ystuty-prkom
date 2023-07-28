@@ -211,9 +211,16 @@ export class PrKomService implements OnModuleInit {
           return null;
         }
 
-        let afterGreens = 0;
+        let beforeOriginals = 0;
         let beforeGreens = 0;
+        let afterGreens = 0;
         for (const el of e.list) {
+          if (el.originalInUniversity || el.originalFromEGPU) {
+            if (el.position < item.position) {
+              ++beforeOriginals;
+            }
+          }
+
           if (el.isGreen) {
             if (el.position < item.position) {
               beforeGreens++;
@@ -230,8 +237,9 @@ export class PrKomService implements OnModuleInit {
           ...(showOriginalInfo && { originalInfo: e.originalInfo }),
           item,
           payload: {
-            afterGreens,
+            beforeOriginals,
             beforeGreens,
+            afterGreens,
             totalItems: e.list.length,
           },
         };
