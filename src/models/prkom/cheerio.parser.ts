@@ -149,7 +149,10 @@ export const parseIncomingsInfo = async (html: string) => {
   for (const el of $('style')) {
     const css = $(el).text();
 
-    const greenRules = findCssRules(css, 'background-color', '#90ee90');
+    const greenRules = [
+      ...findCssRules(css, 'color', '#228b22'),
+      ...findCssRules(css, 'background-color', '#90ee90'),
+    ];
     for (const greenRule of greenRules.filter((e) => e.type === 'rule')) {
       let [selector] = greenRule.selectors;
       if (selector) {
