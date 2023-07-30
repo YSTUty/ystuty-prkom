@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.0.5](https://github.com/YSTUty/ystuty-prkom/compare/v1.0.4...v1.0.5) (2023-07-30)
+
+
+### 🚀 Features
+
+* **prkom:** add field `beforeOriginals` to payload on get by uid ([e6042ea](https://github.com/YSTUty/ystuty-prkom/commit/e6042ea6fd9794944a9e4faa232499325c85d361))
+
+
+### 🧹 Chore
+
+* **parser:** check `val` in `prepareType` ([fbcdc4f](https://github.com/YSTUty/ystuty-prkom/commit/fbcdc4fc9d232f4ff40b59d320751ed0eca4f221))
+* **parser:** update `isHightPriority` field ([6e1c29b](https://github.com/YSTUty/ystuty-prkom/commit/6e1c29b5ba14c529c51d56dda3e796f7e0cef922))
+* **parser:** update green color selector ([37a1d6e](https://github.com/YSTUty/ystuty-prkom/commit/37a1d6e1f25fe078e192945132fa815a74d9203a))
+* **prkom:** add `USE_SYS_FW_WATCHER` env for toggle fs watcher type ([de40184](https://github.com/YSTUty/ystuty-prkom/commit/de40184c56ba0f148c1d221d75601bb75aa1c371))
+
 ### [1.0.4](https://github.com/YSTUty/ystuty-prkom/compare/v1.0.3...v1.0.4) (2023-07-19)
 
 
