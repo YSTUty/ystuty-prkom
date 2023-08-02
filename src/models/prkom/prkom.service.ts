@@ -12,6 +12,7 @@ import {
   FormTrainingType,
   LevelTrainingType,
 } from '@my-interfaces';
+import { convertToNumeric } from '@my-common';
 
 import { PrKomFsProvider } from './prkom-fs.provider';
 import { PrKomWebProvider } from './prkom-web.provider';
@@ -199,14 +200,20 @@ export class PrKomService implements OnModuleInit {
     return response;
   }
 
-  public async getByUid(uid: string, showOriginalInfo = false) {
+  public async getByUids(uids: string[], showOriginalInfo = false) {
     if (!this.isLoaded) {
       throw new BadRequestException('wait for app initialization');
+    }
+    uids = uids.map(convertToNumeric).filter(Boolean);
+    if (uids.length === 0) {
+      return [];
     }
 
     const result = [...this.prKomProvider.allIncomingsInfo.entries()]
       .map(([filename, { response: e, isCache }]) => {
-        const item = e.list.find((e) => e?.uid === uid);
+        const item = e.list.find((e) =>
+          uids.includes(convertToNumeric(e?.uid)),
+        );
         if (!item) {
           return null;
         }

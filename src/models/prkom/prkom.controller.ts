@@ -9,6 +9,7 @@ import {
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import * as xEnv from '@my-environment';
+import { convertToNumeric } from '@my-common';
 
 import { PrKomService } from './prkom.service';
 
@@ -66,7 +67,16 @@ export class PrKomController {
     @Param('uid') uid: string,
     @Query('original', new DefaultValuePipe(false)) original: boolean,
   ) {
-    return await this.prKomService.getByUid(uid, original);
+    return await this.prKomService.getByUids([uid], original);
+  }
+
+  @Get('get_many')
+  async getByUids(
+    @Query('uids') uidsStr: string,
+    @Query('original', new DefaultValuePipe(false)) original: boolean,
+  ) {
+    const uids = uidsStr.split(',').map(convertToNumeric).filter(Boolean);
+    return await this.prKomService.getByUids(uids, original);
   }
 
   @Get('control/:action')
