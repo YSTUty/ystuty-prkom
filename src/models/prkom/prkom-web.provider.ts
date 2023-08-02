@@ -178,7 +178,7 @@ export class PrKomWebProvider extends PrKomBaseProvider {
 
   protected async loadListOfIncoming() {
     try {
-      const prkom_svod_Response = await this.fetch('/prkom_svod/listab1.htm', {
+      const prkom_svod_Response = await this.fetch('/listab1.htm', {
         useCache: true,
         cacheTtl: 1e3 * 60 /* * 60 * 24 */,
       });
@@ -196,7 +196,7 @@ export class PrKomWebProvider extends PrKomBaseProvider {
 
   public async getIncomingsInfo(filename: string, cacheTtl = 1e3 * 60 * 7) {
     try {
-      const { isCache, data } = await this.fetch(`/prkom_svod/${filename}`, {
+      const { isCache, data } = await this.fetch(`/${filename}`, {
         useCache: true,
         cacheTtl,
       });

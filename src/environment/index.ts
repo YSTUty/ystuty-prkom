@@ -21,7 +21,7 @@ export const SERVER_API_ACCESS_TOKEN: string =
     Math.random().toString(36).substring(2, 15);
 
 export const YSTU_URL: string =
-  process.env.YSTU_URL || 'https://www.ystu.ru/files';
+  process.env.YSTU_URL || 'https://www.ystu.ru/files/prkom_svod';
 
 // * Swagger
 export const SWAGGER_ACCESS_USERNAME: string =
