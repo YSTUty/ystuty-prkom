@@ -13,13 +13,14 @@ export class PrKomFsProvider extends PrKomBaseProvider {
   protected timeListOfIncoming = 0;
 
   protected async loadListOfIncoming() {
+    const filePath = `${xEnv.PRKOM_SVOD_PATH}/listab1.htm`;
     if (Date.now() - this.timeListOfIncoming < 1e3) {
       return;
     }
     this.timeListOfIncoming = Date.now();
 
     try {
-      const stat = await Fs.stat('./prkom_svod/listab1.htm');
+      const stat = await Fs.stat(filePath);
       this.logger.log(`Stat [listab1.htm]: ${stat.size}; ${stat.mtime}`);
     } catch (err) {
       this.logger.error(err);
@@ -27,7 +28,7 @@ export class PrKomFsProvider extends PrKomBaseProvider {
     }
 
     try {
-      const listab1 = await Fs.readFile('./prkom_svod/listab1.htm', 'utf-8');
+      const listab1 = await Fs.readFile(filePath, 'utf-8');
 
       this.incomingsList = cheerioParser.parseMainIncomingsList(listab1);
       // this.loadedFiles = 0;
@@ -38,11 +39,18 @@ export class PrKomFsProvider extends PrKomBaseProvider {
     return false;
   }
 
-  public async getIncomingsInfo(filename: string) {
+  public async getIncomingsInfo(filename: string, useDefaultSvod = false) {
+    const filePath = `${
+      useDefaultSvod ? xEnv.PRKOM_SVOD_PATH : xEnv.PRKOM_SVOD_PATH_2
+    }/${filename}`;
+
     try {
-      const stat = await Fs.stat(`./prkom_svod/${filename}`);
+      const stat = await Fs.stat(filePath);
       this.logger.log(`Stat [${filename}]: ${stat.size}; ${stat.mtime}`);
     } catch (err) {
+      if (!useDefaultSvod) {
+        return this.getIncomingsInfo(filename, true);
+      }
       if (err.code !== 'ENOENT') {
         this.logger.error(err);
       }
@@ -50,7 +58,7 @@ export class PrKomFsProvider extends PrKomBaseProvider {
     }
 
     try {
-      const data = await Fs.readFile(`./prkom_svod/${filename}`, 'utf-8');
+      const data = await Fs.readFile(filePath, 'utf-8');
 
       const response = await cheerioParser.parseIncomingsInfo(data);
       return response || null;
@@ -93,7 +101,7 @@ export class PrKomFsProvider extends PrKomBaseProvider {
     let watcher: chokidar.FSWatcher | undefined;
     if (useSysWatch) {
       watcher = chokidar
-        .watch('./prkom_svod/', {
+        .watch(`${xEnv.PRKOM_SVOD_PATH}/`, {
           depth: 1,
           usePolling: false,
         })
@@ -133,6 +141,6 @@ export class PrKomFsProvider extends PrKomBaseProvider {
       await new Promise((resolve) => setImmediate(resolve));
     } while (this.filesWatcherPower);
 
-    watcher?.unwatch('./prkom_svod/');
+    watcher?.unwatch(`${xEnv.PRKOM_SVOD_PATH}/`);
   }
 }

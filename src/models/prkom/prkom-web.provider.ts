@@ -178,10 +178,13 @@ export class PrKomWebProvider extends PrKomBaseProvider {
 
   protected async loadListOfIncoming() {
     try {
-      const prkom_svod_Response = await this.fetch('/listab1.htm', {
-        useCache: true,
-        cacheTtl: 1e3 * 60 /* * 60 * 24 */,
-      });
+      const prkom_svod_Response = await this.fetch(
+        `${xEnv.PRKOM_SVOD_PATH}/listab1.htm`,
+        {
+          useCache: true,
+          cacheTtl: 1e3 * 60 /* * 60 * 24 */,
+        },
+      );
 
       this.incomingsList = cheerioParser.parseMainIncomingsList(
         prkom_svod_Response.data,
@@ -194,18 +197,30 @@ export class PrKomWebProvider extends PrKomBaseProvider {
     return false;
   }
 
-  public async getIncomingsInfo(filename: string, cacheTtl = 1e3 * 60 * 7) {
+  public async getIncomingsInfo(
+    filename: string,
+    cacheTtl = 1e3 * 60 * 7,
+    useDefaultSvod = false,
+  ) {
     try {
-      const { isCache, data } = await this.fetch(`/${filename}`, {
-        useCache: true,
-        cacheTtl,
-      });
+      const { isCache, data } = await this.fetch(
+        `${
+          useDefaultSvod ? xEnv.PRKOM_SVOD_PATH : xEnv.PRKOM_SVOD_PATH_2
+        }/${filename}`,
+        {
+          useCache: true,
+          cacheTtl,
+        },
+      );
 
       const response = await cheerioParser.parseIncomingsInfo(data);
       return response ? { isCache, response } : null;
     } catch (err) {
       if (err instanceof AxiosError) {
         if (err.response?.status === 404) {
+          if (!useDefaultSvod) {
+            return this.getIncomingsInfo(filename, cacheTtl, true);
+          }
           return null;
         }
       }
