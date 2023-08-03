@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.0.6](https://github.com/YSTUty/ystuty-prkom/compare/v1.0.5...v1.0.6) (2023-08-03)
+
+
+### 🧹 Chore
+
+* **env:** add `/prkom_svod` to env  `YSTU_URL` ([346c974](https://github.com/YSTUty/ystuty-prkom/commit/346c974ada9045d0c7fccac5668bb3b22722cffb))
+
+
+### 🚀 Features
+
+* **prkom:** add `get_many` method to controller ([3db0d07](https://github.com/YSTUty/ystuty-prkom/commit/3db0d07c27a6edae7ddbf3d85c291006a45c6f92))
+* **provider:** add parsing for second prkom dir ([f13e114](https://github.com/YSTUty/ystuty-prkom/commit/f13e11414fc9e3380ad1b59c1e974eb6b39f0399))
+
 ### [1.0.5](https://github.com/YSTUty/ystuty-prkom/compare/v1.0.4...v1.0.5) (2023-07-30)
 
 
