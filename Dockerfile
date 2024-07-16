@@ -5,13 +5,13 @@ FROM endeveit/docker-jq AS prePackage
 
 COPY package.json /tmp
 
-RUN jq '{ dependencies, devDependencies, peerDependencies, license, scripts: (.scripts | { postinstall }) }' < /tmp/package.json > /tmp/prepare-package.json
+RUN jq '{ dependencies, devDependencies, peerDependencies, resolutions, license, scripts: (.scripts | { postinstall }) }' < /tmp/package.json > /tmp/prepare-package.json
 # Keep `postinstall` script
 
 ##
-# [container] deps
+# [container] Package deps
 ##
-FROM node:16-alpine AS deps
+FROM node:18-alpine AS deps
 
 WORKDIR /deps
 
@@ -26,7 +26,7 @@ RUN yarn install --pure-lockfile; \
 ##
 # [container] Base
 ##
-FROM node:16-alpine AS base
+FROM node:18-alpine AS base
 
 WORKDIR /home/node/app
 
