@@ -1,7 +1,7 @@
 import { Logger } from '@nestjs/common';
 import * as _ from 'lodash';
 
-import { IncomingsLink, AbiturientCachedInfo } from '@my-interfaces';
+import { IncomingsLink, SpecRecInfo, DirInfo } from '@my-interfaces';
 
 export abstract class PrKomBaseProvider {
   protected readonly logger = new Logger(this.constructor.name);
@@ -10,7 +10,11 @@ export abstract class PrKomBaseProvider {
   public loadedFiles: number = -1;
 
   public filesWatcherPower = false;
-  public allIncomingsInfo = new Map<string, AbiturientCachedInfo>();
+  public allIncomingsInfo = new Map<string, SpecRecInfo[]>();
+  public allDirectionsInfo = new Map<
+    string,
+    { title: string; rows: DirInfo[] }
+  >();
 
   public async init() {
     return await this.loadListPdfs();

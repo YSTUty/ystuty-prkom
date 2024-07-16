@@ -140,8 +140,8 @@ export type IncomingsPageInfo = {
   //   /** Дата формирования приемной кампании */
   //   date: Date;
   // };
-  // /** Конкурсная группа */
-  // competitionGroupName: string;
+  /** Конкурсная группа */
+  competitionGroupName?: string;
   /** Форма обучения */
   formTraining: FormTrainingType;
   /** Особенности приема */
@@ -157,6 +157,10 @@ export type IncomingsPageInfo = {
   // };
   /** Основание поступления */
   basisAdmission: string;
+  /** Категория приема */
+  admissionCategory: string;
+  /** Подразделение */
+  division: string;
   // /** Источник финансирования */
   // sourceFunding: string;
   /** Места */
@@ -220,20 +224,59 @@ export type AbiturientInfo_Magister = AbiturientInfo_Base & {
   scoreExam: number;
 };
 
-// export type AbiturientCachedInfo = {
-//   isCache: any;
-//   response: {
-//     info: IncomingsPageInfo;
-//     originalInfo: IncomingsPageOriginalInfo;
-//     list: AbiturientInfo[];
-//     titles: string[];
-//   };
-// };
-
-export type AbiturientCachedInfo = {
+export type SpecRecInfo = {
   info: IncomingsPageInfo;
   originalInfo: IncomingsPageOriginalInfo;
   list: AbiturientInfo[];
   titles: string[];
   hash: string;
-}[];
+
+  /** Мест */
+  countPlaces: number;
+  /** Заявлений */
+  countApplications: number;
+  /** Зачислено */
+  countEnrolled: number;
+};
+
+export type DirInfo = {
+  /** @example `104` */
+  codeNum: string;
+  /** Направление (специальность) */
+  directionTraining:
+    | string
+    | {
+        /** @example `44.03.01` */
+        code: string;
+        /** @example `Педагогическое образование` */
+        name: string;
+      };
+  // directionTraining: string;
+  /** @example `Заочная` */
+  formTraining: string;
+  /** @example `Б` */
+  t2: 'Б' | 'ОК' | 'ПО' | 'Ц' /* string */;
+  /** @example `Бюджетная основа` */
+  basisAdmission: string;
+  /** @example `Основные места в рамках контрольных цифр` */
+  admissionCategory: string;
+  /** @example `` */
+  t3?: 'ОП' /* string */;
+  /** @example `История` */
+  lsns: string;
+  /** Конкурсная группа @example `104_44.03.01_З_Б_История` */
+  competitionGroupName: string;
+
+  /** Количество мест @example `4` */
+  countPlaces: string;
+  /** Подано заявлений всего @example `0` */
+  countApplications: string;
+  /** Количество мест по договорам об оказании платных образовательных услуг @example `0` */
+  countApplications_paid: string;
+  /** Подано заявлений на бюджетную основу @example `68` */
+  countApplications_budgetary: string;
+  /** Подано заявлений на целевой прием @example `68` */
+  countApplications_targeted: string;
+  /** Подано заявлений на полное возмещение затрат @example `0` */
+  countApplications_full_compensation: string;
+};

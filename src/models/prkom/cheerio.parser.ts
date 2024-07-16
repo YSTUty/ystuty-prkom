@@ -325,6 +325,8 @@ export const parseIncomingsInfo = async (html: string) => {
       )?.groups,
     ),
     receptionFeatures: 'none',
+    admissionCategory: null,
+    division: null,
   };
 
   const [titles] = tbodyData.splice(0, 1);

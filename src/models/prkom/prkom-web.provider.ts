@@ -11,7 +11,7 @@ import * as xEnv from '@my-environment';
 import { PrKomBaseProvider } from './prkom-base.provider';
 import * as cheerioParser from './cheerio.parser';
 import * as pdfParser from './pdf.parser';
-import { loadSpiski } from './pdf.reader';
+import * as pdfReader from './pdf.reader';
 
 const COOKIES_FILE = 'cookies';
 
@@ -281,23 +281,22 @@ export class PrKomWebProvider extends PrKomBaseProvider {
     return false;
   }
 
-  public async getIncomingsInfo(
-    link: string,
-    filename: string,
-    // cacheTtl = 1e3 * 60 * 7,
-  ) {
+  public async getIncomingsInfo(link: string, filename: string) {
     try {
       if (!(await this.downloadPdf(link, filename))) {
         return null;
       }
 
       const filePathSpiski = `${xEnv.CACHE_PATH}/${filename}.pdf`;
-      const spiskiTables = await loadSpiski(await Fs.readFile(filePathSpiski));
+      const spiskiTables = await pdfReader.loadSpiski(
+        await Fs.readFile(filePathSpiski),
+      );
 
       const res = spiskiTables.map((table) =>
         pdfParser.parseIncomingsInfo(table),
       );
       await cacheManager.update(['incomingsInfo', filename], res, 12 * 360e3);
+      return res;
     } catch (err) {
       if (err instanceof AxiosError) {
         if (err.response?.status === 404) {
@@ -310,6 +309,93 @@ export class PrKomWebProvider extends PrKomBaseProvider {
       }
       return null;
     }
+  }
+
+  public async getDirectionsInfo(link: string, filename: string) {
+    try {
+      if (!(await this.downloadPdf(link, filename))) {
+        return null;
+      }
+
+      const filePathInfo = `${xEnv.CACHE_PATH}/${filename}.pdf`;
+      const info = pdfReader.formatInformaziya(
+        await pdfReader.loadInformaziya(await Fs.readFile(filePathInfo)),
+      );
+
+      await cacheManager.update(['directionsInfo', filename], info, 12 * 360e3);
+      return info;
+    } catch (err) {
+      if (err instanceof AxiosError) {
+        if (err.response?.status === 404) {
+          return null;
+        }
+      }
+      // this.logger.error('parseIncomingsInfo', err, filename);
+      if (err instanceof Error) {
+        this.logger.error(err, err.stack, 'parseIncomingsInfo');
+      }
+      return null;
+    }
+  }
+
+  public updateCounters(filename: string) {
+    const { rows } = this.allDirectionsInfo.get(filename);
+
+    const isBak = filename.includes('PriemaBak');
+    const incomingsInfo = this.allIncomingsInfo.get(
+      `SpiskiPostupayushhih${isBak ? 'Bak' : 'Mag'}`,
+    );
+
+    let updates = 0;
+    // if (filename.endsWith('Ochnaya')) {
+    for (const row of rows) {
+      let found = false;
+      for (const incomingInfo of incomingsInfo) {
+        if (
+          incomingInfo.info.basisAdmission === row.basisAdmission &&
+          incomingInfo.info.admissionCategory === row.admissionCategory &&
+          // incomingInfo.originalInfo.admissionCategory.replace(
+          //   /Категория приема - /,
+          //   '',
+          // ) === row.admissionCategory &&
+          incomingInfo.originalInfo.formTraining.replace(
+            /Форма обучения - /,
+            '',
+          ) === row.formTraining &&
+          ((incomingInfo.info.receptionFeatures === 'common' &&
+            row.t2 !== 'ОК') ||
+            (incomingInfo.info.receptionFeatures === 'separate' &&
+              row.t2 === 'ОК')) &&
+          row.lsns === incomingInfo.originalInfo.division.split(' / ')[1]
+        ) {
+          incomingInfo.info.competitionGroupName = row.competitionGroupName;
+
+          incomingInfo.countApplications = Number(row.countApplications);
+          incomingInfo.countPlaces = Number(row.countPlaces);
+
+          incomingInfo.info.numbersInfo.total = Number(row.countPlaces);
+          incomingInfo.originalInfo.numbersInfo = `Всего мест: ${
+            incomingInfo.info.numbersInfo.total
+          }. Зачислено: ${
+            incomingInfo.info.numbersInfo.enrolled || 0
+          }. К зачислению: ${incomingInfo.info.numbersInfo.toenroll || 0}.`;
+
+          ++updates;
+          found = true;
+          break;
+        }
+      }
+      if (!found) {
+        this.logger.warn(
+          `[updateCounters] Not found for ${row.competitionGroupName}`,
+        );
+      }
+    }
+    // } else if (filename.endsWith('Zaochnaya')) {
+    //   //
+    // }
+
+    this.logger.debug(`[updateCounters] Count: ${updates} (${filename})`);
   }
 
   public async onFilesWatchLoop() {
@@ -335,17 +421,24 @@ export class PrKomWebProvider extends PrKomBaseProvider {
 
         const { link, filename } = queueUpdatingFiles.shift();
 
-        if (!filename.startsWith('SpiskiPostupayushhih')) {
-          // TODO: add parse other files
-          continue;
+        if (filename.startsWith('SpiskiPostupayushhih')) {
+          const incomingsInfo = await this.getIncomingsInfo(link, filename);
+          if (!incomingsInfo) continue;
+
+          this.allIncomingsInfo.set(filename, incomingsInfo);
+          // console.log('this.allIncomingsInfo', this.allIncomingsInfo);
+        } else if (filename.startsWith('InformacziyaOHodePriema')) {
+          const directionsInfo = await this.getDirectionsInfo(link, filename);
+          if (!directionsInfo) continue;
+
+          this.allDirectionsInfo.set(filename, directionsInfo);
+
+          this.updateCounters(filename);
+          // console.log('this.allDirectionsInfo', this.allDirectionsInfo);
         }
 
-        const incomingsInfo = await this.getIncomingsInfo(link, filename);
-        if (!incomingsInfo) continue;
-
-        this.allIncomingsInfo.set(filename, incomingsInfo);
-        this.loadedFiles = this.allIncomingsInfo.size;
-        // console.log('this.allIncomingsInfo', this.allIncomingsInfo);
+        this.loadedFiles =
+          this.allIncomingsInfo.size + this.allDirectionsInfo.size;
 
         // if (!incomingsInfo.isCache) {
         this.logger.log(`[processFilesWatcher] Update file: ${filename}`);
@@ -353,7 +446,9 @@ export class PrKomWebProvider extends PrKomBaseProvider {
         // }
 
         this.logger.log(
-          `[processFilesWatcher] Progress: ${queueUpdatingFiles.length} => ${this.allIncomingsInfo.size}`,
+          `[processFilesWatcher] Progress: ${queueUpdatingFiles.length} => ${
+            this.allIncomingsInfo.size + this.allDirectionsInfo.size
+          }`,
         );
       } while (queueUpdatingFiles.length > 0);
 

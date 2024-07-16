@@ -58,11 +58,7 @@ export class PrKomService implements OnModuleInit {
           name: file.name,
           desc: file.desc,
           docLink: file.link,
-          specialties: info.map((e) => ({
-            info: e.info,
-            originalInfo: e.originalInfo,
-            hash: e.hash,
-          })),
+          specialties: info.map(({ titles, list, ...rest }) => ({ ...rest })),
         };
       },
     );

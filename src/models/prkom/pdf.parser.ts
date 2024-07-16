@@ -10,6 +10,7 @@ import {
   AbiturientInfo_Bachelor,
   AbiturientInfo_Magister,
   AbiturientInfoComb,
+  SpecRecInfo,
 } from '@my-interfaces';
 
 type ParsedTable = string;
@@ -75,11 +76,12 @@ export const parseIncomingsInfo = (
     //     /.* ?- .* ? (?<number>[0-9]{1,4}) от (?<DD>[0-9]{2})\.(?<MM>[0-9]{2})\.(?<YYYY>[0-9]{4}) (?<time>[0-9:]+)$/i,
     //   )?.groups,
     // ),
+    competitionGroupName: null,
     // competitionGroupName: (({ name } = {}) => name || null)(
     //   competitionGroupName.match(/(?![^-]+)- (?<name>.*)/i)?.groups,
     // ),
     formTraining: (({ type } = {}) => {
-      switch (type.toLocaleLowerCase()) {
+      switch (type?.toLocaleLowerCase()) {
         case 'очная':
           return FormTrainingType.FullTime;
         case 'заочная':
@@ -112,6 +114,12 @@ export const parseIncomingsInfo = (
     // ),
     basisAdmission: (({ name } = {}) => name || null)(
       basisAdmission.match(/(?![^-]+)- (?<name>.*)/i)?.groups,
+    ),
+    admissionCategory: (({ name } = {}) => name || null)(
+      admissionCategory.match(/(?![^-]+)- (?<name>.*)/i)?.groups,
+    ),
+    division: (({ name } = {}) => name || null)(
+      division.match(/(?![^-]+)- (?<name>.*)/i)?.groups,
     ),
     // sourceFunding: (({ name } = {}) => name || null)(
     //   sourceFunding.match(/(?![^-]+)- (?<name>.*)/i)?.groups,
@@ -177,7 +185,11 @@ export const parseIncomingsInfo = (
         '|' +
         typeReceptionFeatures,
     ),
-  };
+
+    countApplications: null,
+    countEnrolled: null,
+    countPlaces: null,
+  } as SpecRecInfo;
 };
 
 const numOrNul = (val: string) => (!isNaN(Number(val)) ? Number(val) : null);
