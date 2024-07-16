@@ -6,27 +6,27 @@ import { IncomingsLink, AbiturientCachedInfo } from '@my-interfaces';
 export abstract class PrKomBaseProvider {
   protected readonly logger = new Logger(this.constructor.name);
 
-  public incomingsList: IncomingsLink[] = [];
+  // public incomingsList: IncomingsLink[] = [];
   public loadedFiles: number = -1;
 
   public filesWatcherPower = false;
   public allIncomingsInfo = new Map<string, AbiturientCachedInfo>();
 
   public async init() {
-    return await this.loadListOfIncoming();
+    return await this.loadListPdfs();
   }
 
-  public get incomingsFilesWithInfo() {
-    return this.incomingsList.flatMap((e) =>
-      e.specialties.filter(Boolean).flatMap((e) => e.files),
-    );
-  }
+  // public get incomingsFilesWithInfo() {
+  //   return this.incomingsList.flatMap((e) =>
+  //     e.specialties.filter(Boolean).flatMap((e) => e.files),
+  //   );
+  // }
 
-  public get incomingsFileNames() {
-    return this.incomingsFilesWithInfo.map((e) => e.filename);
-  }
+  // public get incomingsFileNames() {
+  //   return this.incomingsFilesWithInfo.map((e) => e.filename);
+  // }
 
-  protected abstract loadListOfIncoming(): Promise<boolean>;
+  protected abstract loadListPdfs(): Promise<boolean>;
 
   public async processFilesWatcher() {
     if (this.filesWatcherPower) {

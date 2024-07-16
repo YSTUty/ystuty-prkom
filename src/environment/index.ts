@@ -20,14 +20,7 @@ export const SERVER_API_ACCESS_TOKEN: string =
   Math.random().toString(36).substring(2, 15) +
     Math.random().toString(36).substring(2, 15);
 
-export const YSTU_URL: string =
-  process.env.YSTU_URL || 'https://www.ystu.ru/files';
-
-export const PRKOM_SVOD_PATH: string =
-  process.env.PRKOM_SVOD_PATH || 'prkom_svod';
-
-export const PRKOM_SVOD_PATH_2: string =
-  process.env.PRKOM_SVOD_PATH_2 || `${PRKOM_SVOD_PATH}/prkom_svod1`;
+export const LINKS_URL: string = process.env.LINKS_URL || '';
 
 // * Swagger
 export const SWAGGER_ACCESS_USERNAME: string =

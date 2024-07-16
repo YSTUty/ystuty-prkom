@@ -6,3 +6,4 @@ export * from './filter/http-exception.filter';
 export * from './pipe/validation-http.pipe';
 export * from './util/cache-manager.util';
 export * from './util/other.util';
+export * from './util/pdfreader-TableParser';

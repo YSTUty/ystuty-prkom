@@ -5,40 +5,22 @@ import {
   OnModuleInit,
 } from '@nestjs/common';
 import * as _ from 'lodash';
-import {
-  AbiturientInfo_Magister,
-  IncomingsPageOriginalInfo,
-  IncomingsPageInfo,
-  FormTrainingType,
-  LevelTrainingType,
-} from '@my-interfaces';
 import { convertToNumeric } from '@my-common';
 
-import { PrKomFsProvider } from './prkom-fs.provider';
 import { PrKomWebProvider } from './prkom-web.provider';
 
 @Injectable()
 export class PrKomService implements OnModuleInit {
   private readonly logger = new Logger(PrKomService.name);
-  public isFsProvider = false;
 
-  constructor(
-    private readonly prKomFsProvider: PrKomFsProvider,
-    private readonly prKomWebProvider: PrKomWebProvider,
-  ) {}
+  constructor(private readonly prKomWebProvider: PrKomWebProvider) {}
 
   public isLoaded = false;
 
   async onModuleInit() {
     this.logger.log('Start initializing provider...');
 
-    if (true) {
-      this.isFsProvider = await this.prKomFsProvider.init();
-    }
-
-    if (!this.isFsProvider) {
-      await this.prKomWebProvider.init();
-    }
+    await this.prKomWebProvider.init();
 
     this.prKomProvider.processFilesWatcher().then();
     this.logger.log('Initializing provider finished');
@@ -47,23 +29,43 @@ export class PrKomService implements OnModuleInit {
   }
 
   public get prKomProvider() {
-    return this.isFsProvider ? this.prKomFsProvider : this.prKomWebProvider;
+    return this.prKomWebProvider;
   }
 
-  public async getFiles() {
-    if (this.prKomProvider.loadedFiles < 0) {
-      throw new BadRequestException('wait for app initialization');
-    }
+  // public async getFiles() {
+  //   if (this.prKomProvider.loadedFiles < 0) {
+  //     throw new BadRequestException('wait for app initialization');
+  //   }
 
-    return this.prKomProvider.incomingsFilesWithInfo;
-  }
+  //   return this.prKomProvider.incomingsFilesWithInfo;
+  // }
 
   public async getIncomingsList() {
-    if (this.prKomProvider.incomingsList.length === 0) {
+    if (
+      this.prKomProvider.pdfFiles.length === 0
+      // this.prKomProvider.incomingsList.length === 0
+    ) {
       throw new BadRequestException('wait for app initialization');
     }
 
-    return this.prKomProvider.incomingsList;
+    return [...this.prKomProvider.allIncomingsInfo.entries()].map(
+      ([filename, info]) => {
+        const file = this.prKomProvider.pdfFiles.find(
+          (e) => e.name === filename,
+        );
+        return {
+          title: file.title,
+          name: file.name,
+          desc: file.desc,
+          docLink: file.link,
+          specialties: info.map((e) => ({
+            info: e.info,
+            originalInfo: e.originalInfo,
+            hash: e.hash,
+          })),
+        };
+      },
+    );
   }
 
   public async getInfo() {
@@ -71,42 +73,41 @@ export class PrKomService implements OnModuleInit {
       isLoaded: this.isLoaded,
       loadedFiles: this.prKomProvider.loadedFiles,
 
-      blockedTime: !this.isFsProvider
-        ? this.prKomWebProvider.blockedTime
-        : null,
-      filesWatcherPower: !this.isFsProvider
-        ? this.prKomWebProvider.filesWatcherPower
-        : null,
-      queueUpdatingFiles: !this.isFsProvider
-        ? this.prKomWebProvider.queueUpdatingFiles
-        : null,
-      queueUpdatingFilesLen: !this.isFsProvider
-        ? this.prKomWebProvider.queueUpdatingFiles.length
-        : null,
+      blockedTime: this.prKomWebProvider.blockedTime,
+      filesWatcherPower: this.prKomWebProvider.filesWatcherPower,
+      // queueUpdatingFiles: this.prKomWebProvider.queueUpdatingFiles,
+      // queueUpdatingFilesLen: this.prKomWebProvider.queueUpdatingFiles.length,
     };
   }
 
-  public async getAllIncomingsInfoList(showOriginalInfo = false) {
-    if (!this.isLoaded) {
-      throw new BadRequestException('wait for app initialization');
-    }
+  // public async getAllIncomingsInfoList(showOriginalInfo = false) {
+  //   if (!this.isLoaded) {
+  //     throw new BadRequestException('wait for app initialization');
+  //   }
 
-    return [...this.prKomProvider.allIncomingsInfo.entries()].map(
-      ([filename, { isCache, response }]) => ({
-        filename,
-        isCache,
-        response: {
-          info: response.info,
-          list: response.list,
-          titles: response.titles,
-          ...(showOriginalInfo && { originalInfo: response.originalInfo }),
-        },
-      }),
-    );
-  }
+  //   return [...this.prKomProvider.allIncomingsInfo.entries()].map(
+  //     ([filename, response]) => ({
+  //       filename,
+  //       response: response.map((e) => ({
+  //         info: e.info,
+  //         list: e.list,
+  //         titles: e.titles,
+  //         ...(showOriginalInfo && { originalInfo: e.originalInfo }),
+  //       })),
+  //       // isCache,
+  //       // response: {
+  //       //   info: response.info,
+  //       //   list: response.list,
+  //       //   titles: response.titles,
+  //       //   // ...(showOriginalInfo && { originalInfo: response.originalInfo }),
+  //       // },
+  //     }),
+  //   );
+  // }
 
   public async getIncomingsInfoListByFile(
     filename: string,
+    specHash?: string,
     showOriginalInfo = false,
   ) {
     if (!this.isLoaded) {
@@ -117,87 +118,44 @@ export class PrKomService implements OnModuleInit {
       return false;
     }
 
-    const { isCache, response } =
-      this.prKomProvider.allIncomingsInfo.get(filename);
+    const incomingsInfo = this.prKomProvider.allIncomingsInfo.get(filename);
+
+    if (specHash) {
+      const incomingInfo = incomingsInfo.find((e) => e.hash === specHash);
+      if (!incomingInfo) {
+        return false;
+      }
+
+      const file = this.prKomProvider.pdfFiles.find((e) => e.name === filename);
+
+      return {
+        filename,
+        response: {
+          info: incomingInfo.info,
+          titles: incomingInfo.titles,
+          ...(showOriginalInfo && { originalInfo: incomingInfo.originalInfo }),
+          list: incomingInfo.list,
+          docLink: file.link,
+        },
+      };
+    }
 
     return {
       filename,
-      isCache,
-      response: {
-        info: response.info,
-        list: response.list,
-        titles: response.titles,
-        ...(showOriginalInfo && { originalInfo: response.originalInfo }),
-      },
+      response: incomingsInfo.map((e) => ({
+        info: e.info,
+        titles: e.titles,
+        ...(showOriginalInfo && { originalInfo: e.originalInfo }),
+        // list: e.list,
+      })),
+      // isCache,
+      // response: {
+      //   info: response.info,
+      //   list: response.list,
+      //   titles: response.titles,
+      //   ...(showOriginalInfo && { originalInfo: response.originalInfo }),
+      // },
     };
-  }
-
-  public async getByFake(showOriginalInfo = false) {
-    let response: {
-      item: AbiturientInfo_Magister;
-      payload: {
-        afterGreens: number;
-        beforeGreens: number;
-        totalItems: number;
-      };
-      originalInfo?: IncomingsPageOriginalInfo;
-      isCache: any;
-      filename: string;
-      info: IncomingsPageInfo;
-    }[] = [];
-
-    response.push({
-      isCache: null,
-      filename: '232_Khimicheskaya tekhnologiya_B.html',
-      info: {
-        buildDate: new Date(),
-        prkom: { number: 232, date: new Date('2022-12-22T12:30:40.000Z') },
-        competitionGroupName: 'Химическая технология',
-        formTraining: FormTrainingType.FullTime,
-        levelTraining: LevelTrainingType.Magister,
-        directionTraining: {
-          code: '18.04.01',
-          name: 'Химическая технология',
-        },
-        basisAdmission: 'Бюджетная основа',
-        sourceFunding: 'Федеральный бюджет',
-        numbersInfo: { total: 7, enrolled: 0, toenroll: 7 },
-      },
-      ...(showOriginalInfo && {
-        originalInfo: {
-          buildDate:
-            'Дата формирования - 07.07.2023. Время формирования - xxx.',
-          prkomDate: 'Приемная кампания- Приемная кампания 232 от xxx',
-          competitionGroupName: 'Конкурсная группа - Химия',
-          formTraining: 'Форма обучения - Очная',
-          levelTraining: 'Уровень подготовки - Магистратура',
-          directionTraining:
-            'УГС/Направление подготовки/специальность - 04.04.01 Химия',
-          basisAdmission: 'Основание поступления - Бюджетная основа',
-          sourceFunding: 'Источник финансирования - Федеральный бюджет',
-          numbersInfo: 'Всего мест: 4. Зачислено: 0. К зачислению: 4.',
-        },
-      }),
-      item: {
-        isGreen: false,
-        isRed: false,
-        position: _.random(1, 3),
-        uid: '123-456-789 00',
-        totalScore: _.random(10, 11),
-        scoreSubjectsSum: 0,
-        scoreExam: null,
-        scoreCompetitive: _.random(10, 11),
-        preemptiveRight: false,
-        originalInUniversity: true,
-        originalFromEGPU: false,
-        state: 1,
-        priority: 1,
-        isHightPriority: true,
-      },
-      payload: { afterGreens: 0, beforeGreens: 0, totalItems: 12 },
-    });
-
-    return response;
   }
 
   public async getByUids(uids: string[], showOriginalInfo = false) {
@@ -210,46 +168,74 @@ export class PrKomService implements OnModuleInit {
     }
 
     const result = [...this.prKomProvider.allIncomingsInfo.entries()]
-      .map(([filename, { response: e, isCache }]) => {
-        const item = e.list.find((e) =>
-          uids.includes(convertToNumeric(e?.uid)),
-        );
-        if (!item) {
+      .flatMap(([filename, items]) => {
+        const listV: {
+          filename: string;
+          info: any;
+          originalInfo: any;
+          item: any;
+          hash: string;
+          payload: {
+            beforeOriginals: number;
+            beforeGreens: number;
+            afterGreens: number;
+            totalItems: number;
+          };
+        }[] = [];
+
+        for (const itemZ of items) {
+          const item = itemZ.list.find((e) =>
+            uids.includes(convertToNumeric(e?.uid)),
+          );
+          if (!item) {
+            continue;
+            // return null;
+          }
+
+          let beforeOriginals = 0;
+          let beforeGreens = 0;
+          let afterGreens = 0;
+          for (const el of itemZ.list) {
+            if (
+              el.originalInUniversity ||
+              el.originalFromEGPU ||
+              el.docType === 'original'
+            ) {
+              if (el.position < item.position) {
+                ++beforeOriginals;
+              }
+            }
+
+            // TODO: its not implemented yet (`isGreen`)
+
+            // if (el.isGreen) {
+            //   if (el.position < item.position) {
+            //     beforeGreens++;
+            //   } else if (el.position !== item.position) {
+            //     afterGreens++;
+            //   }
+            // }
+          }
+
+          listV.push({
+            // isCache,
+            filename,
+            info: itemZ.info,
+            hash: itemZ.hash,
+            ...(showOriginalInfo && { originalInfo: itemZ.originalInfo }),
+            item,
+            payload: {
+              beforeOriginals,
+              beforeGreens,
+              afterGreens,
+              totalItems: itemZ.list.length,
+            },
+          });
+        }
+        if (listV.length === 0) {
           return null;
         }
-
-        let beforeOriginals = 0;
-        let beforeGreens = 0;
-        let afterGreens = 0;
-        for (const el of e.list) {
-          if (el.originalInUniversity || el.originalFromEGPU) {
-            if (el.position < item.position) {
-              ++beforeOriginals;
-            }
-          }
-
-          if (el.isGreen) {
-            if (el.position < item.position) {
-              beforeGreens++;
-            } else if (el.position !== item.position) {
-              afterGreens++;
-            }
-          }
-        }
-
-        return {
-          isCache,
-          filename,
-          info: e.info,
-          ...(showOriginalInfo && { originalInfo: e.originalInfo }),
-          item,
-          payload: {
-            beforeOriginals,
-            beforeGreens,
-            afterGreens,
-            totalItems: e.list.length,
-          },
-        };
+        return listV;
       })
       .filter(Boolean);
 
@@ -257,10 +243,6 @@ export class PrKomService implements OnModuleInit {
   }
 
   public async onAction(action: string) {
-    if (this.isFsProvider) {
-      return 'is not web provider';
-    }
-
     switch (action) {
       case 'stop':
         this.prKomProvider.filesWatcherPower = false;

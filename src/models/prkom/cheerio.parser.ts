@@ -16,6 +16,26 @@ import {
   AbiturientInfoComb,
 } from '@my-interfaces';
 
+export const parseHodPriema = (html: string) => {
+  const $ = cheerio.load(html);
+
+  const pdfLinks = $('.elementor-icon-box-wrapper .elementor-icon-box-content');
+
+  const links: { title: string; desc: string; link: string }[] = [];
+
+  for (const linkEl of pdfLinks) {
+    const $linkEl = $(linkEl);
+    const link = $linkEl.find('a').attr('href');
+    const title = $linkEl.find('a').text();
+
+    const desc = $linkEl.find('.elementor-icon-box-description').text();
+
+    links.push({ title, desc, link });
+  }
+
+  return links;
+};
+
 export const parseMainIncomingsList = (html: string) => {
   const $ = cheerio.load(html);
 
@@ -222,14 +242,16 @@ export const parseIncomingsInfo = async (html: string) => {
 
   const originalInfo: IncomingsPageOriginalInfo = {
     buildDate,
-    prkomDate,
-    competitionGroupName,
+    // prkomDate,
+    // competitionGroupName,
     formTraining,
-    levelTraining,
-    directionTraining,
+    // levelTraining,
+    // directionTraining,
     basisAdmission,
-    sourceFunding,
+    // sourceFunding,
     numbersInfo,
+    admissionCategory: null,
+    division: null,
   };
 
   const info: IncomingsPageInfo = {
@@ -239,20 +261,20 @@ export const parseIncomingsInfo = async (html: string) => {
         /.* - (?<DD>[0-9]{2})\.(?<MM>[0-9]{2})\.(?<YYYY>[0-9]{4})\. .* - (?<time>[0-9:]+).$/i,
       )?.groups,
     ),
-    prkom: (({ number, DD, MM, YYYY, time } = {}) =>
-      !number && !time
-        ? null
-        : {
-            number: Number(number),
-            date: new Date(`${YYYY}.${MM}.${DD} ${time}`),
-          })(
-      prkomDate.match(
-        /.* ?- .* ? (?<number>[0-9]{1,4}) от (?<DD>[0-9]{2})\.(?<MM>[0-9]{2})\.(?<YYYY>[0-9]{4}) (?<time>[0-9:]+)$/i,
-      )?.groups,
-    ),
-    competitionGroupName: (({ name } = {}) => name || null)(
-      competitionGroupName.match(/(?![^-]+)- (?<name>.*)/i)?.groups,
-    ),
+    // prkom: (({ number, DD, MM, YYYY, time } = {}) =>
+    //   !number && !time
+    //     ? null
+    //     : {
+    //         number: Number(number),
+    //         date: new Date(`${YYYY}.${MM}.${DD} ${time}`),
+    //       })(
+    //   prkomDate.match(
+    //     /.* ?- .* ? (?<number>[0-9]{1,4}) от (?<DD>[0-9]{2})\.(?<MM>[0-9]{2})\.(?<YYYY>[0-9]{4}) (?<time>[0-9:]+)$/i,
+    //   )?.groups,
+    // ),
+    // competitionGroupName: (({ name } = {}) => name || null)(
+    //   competitionGroupName.match(/(?![^-]+)- (?<name>.*)/i)?.groups,
+    // ),
     formTraining: (({ type } = {}) => {
       switch (type.toLocaleLowerCase()) {
         case 'очная':
@@ -265,32 +287,32 @@ export const parseIncomingsInfo = async (html: string) => {
           return FormTrainingType.Unknown;
       }
     })(formTraining.match(/(?![^-]+)- (?<type>.*)/i)?.groups),
-    levelTraining: (({ type } = {}) => {
-      let str = type.toLocaleLowerCase();
-      switch (true) {
-        case str.startsWith('бакалавриат'):
-          return LevelTrainingType.Bachelor;
-        case str.startsWith('специалитет'):
-          return LevelTrainingType.Specialty;
-        case str.startsWith('магистратура'):
-          return LevelTrainingType.Magister;
-        case str.startsWith('аспирантура'):
-          return LevelTrainingType.Postgraduate;
-        default:
-          return LevelTrainingType.Unknown;
-      }
-    })(levelTraining.match(/(?![^-]+)- (?<type>.*)/i)?.groups),
-    directionTraining: (({ code, name } = {}) =>
-      !name ? null : { code, name })(
-      directionTraining.match(/(?![^-]+)- (?<code>[0-9\.]+) (?<name>.*)/i)
-        ?.groups,
-    ),
+    // levelTraining: (({ type } = {}) => {
+    //   let str = type.toLocaleLowerCase();
+    //   switch (true) {
+    //     case str.startsWith('бакалавриат'):
+    //       return LevelTrainingType.Bachelor;
+    //     case str.startsWith('специалитет'):
+    //       return LevelTrainingType.Specialty;
+    //     case str.startsWith('магистратура'):
+    //       return LevelTrainingType.Magister;
+    //     case str.startsWith('аспирантура'):
+    //       return LevelTrainingType.Postgraduate;
+    //     default:
+    //       return LevelTrainingType.Unknown;
+    //   }
+    // })(levelTraining.match(/(?![^-]+)- (?<type>.*)/i)?.groups),
+    // directionTraining: (({ code, name } = {}) =>
+    //   !name ? null : { code, name })(
+    //   directionTraining.match(/(?![^-]+)- (?<code>[0-9\.]+) (?<name>.*)/i)
+    //     ?.groups,
+    // ),
     basisAdmission: (({ name } = {}) => name || null)(
       basisAdmission.match(/(?![^-]+)- (?<name>.*)/i)?.groups,
     ),
-    sourceFunding: (({ name } = {}) => name || null)(
-      sourceFunding.match(/(?![^-]+)- (?<name>.*)/i)?.groups,
-    ),
+    // sourceFunding: (({ name } = {}) => name || null)(
+    //   sourceFunding.match(/(?![^-]+)- (?<name>.*)/i)?.groups,
+    // ),
     numbersInfo: ((nums) =>
       !nums
         ? null
@@ -302,6 +324,7 @@ export const parseIncomingsInfo = async (html: string) => {
         /.*: (?<total>[0-9]{1,4})\..*: (?<enrolled>[0-9]{1,4})\..*: (?<toenroll>[0-9]{1,4})\.?$/i,
       )?.groups,
     ),
+    receptionFeatures: 'none',
   };
 
   const [titles] = tbodyData.splice(0, 1);
@@ -310,16 +333,17 @@ export const parseIncomingsInfo = async (html: string) => {
   }
 
   let listApplicants: AbiturientInfo[] = [];
-  switch (info.levelTraining) {
-    case LevelTrainingType.Bachelor:
-    case LevelTrainingType.Specialty:
-      listApplicants = parseBachelor(tbodyData, titles);
-      break;
-    case LevelTrainingType.Magister:
-    case LevelTrainingType.Postgraduate:
-      listApplicants = parseMagister(tbodyData, titles);
-      break;
-  }
+  listApplicants = parseBachelor(tbodyData, titles);
+  // switch (info.levelTraining) {
+  //   case LevelTrainingType.Bachelor:
+  //   case LevelTrainingType.Specialty:
+  //     listApplicants = parseBachelor(tbodyData, titles);
+  //     break;
+  //   case LevelTrainingType.Magister:
+  //   case LevelTrainingType.Postgraduate:
+  //     listApplicants = parseMagister(tbodyData, titles);
+  //     break;
+  // }
 
   const preparedTitles = titles
     .map((e) => e.content?.trim().replace(/\s/g, ' '))
@@ -466,6 +490,7 @@ const parseBaseTitleIndexes = (titles: ParsedTableIncomings[]) => {
     state: findIndex('Состояние'),
     priority: findIndex('Приоритет'),
     isHightPriority: findIndex('Это высший приоритет'),
-  };
+    docType: findIndex('Вид документа'),
+  } as any;
   return indexes;
 };

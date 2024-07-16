@@ -18,20 +18,22 @@ import { PrKomService } from './prkom.service';
 export class PrKomController {
   constructor(private readonly prKomService: PrKomService) {}
 
-  @Get('all_full_list')
-  async getAllIncomingsInfoList(
-    @Query('original', new DefaultValuePipe(false)) original?: boolean,
-  ) {
-    return await this.prKomService.getAllIncomingsInfoList(original);
-  }
+  // @Get('all_full_list')
+  // async getAllIncomingsInfoList(
+  //   @Query('original', new DefaultValuePipe(false)) original?: boolean,
+  // ) {
+  //   return await this.prKomService.getAllIncomingsInfoList(original);
+  // }
 
   @Get('full_list')
   async getIncomingsInfoListByFile(
     @Query('filename') filename: string,
+    @Query('specHash') specHash?: string,
     @Query('original', new DefaultValuePipe(false)) original?: boolean,
   ) {
     const response = await this.prKomService.getIncomingsInfoListByFile(
       filename,
+      specHash,
       original,
     );
     if (!response) {
@@ -45,21 +47,9 @@ export class PrKomController {
     return await this.prKomService.getIncomingsList();
   }
 
-  @Get('files')
-  async getFiles() {
-    return await this.prKomService.getFiles();
-  }
-
   @Get('info')
   async getInfo() {
     return await this.prKomService.getInfo();
-  }
-
-  @Get('get/fake')
-  async getByFake(
-    @Query('original', new DefaultValuePipe(false)) original: boolean,
-  ) {
-    return await this.prKomService.getByFake(original);
   }
 
   @Get('get/:uid')
