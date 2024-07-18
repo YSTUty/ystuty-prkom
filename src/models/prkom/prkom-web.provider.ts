@@ -228,6 +228,7 @@ export class PrKomWebProvider extends PrKomBaseProvider {
         writer.on('error', reject);
       });
 
+      this.logger.debug('downloadPdf done: ' + filename);
       // this.loadedFiles = 0;
       return true;
     } catch (err) {
@@ -288,9 +289,10 @@ export class PrKomWebProvider extends PrKomBaseProvider {
       }
 
       const filePathSpiski = `${xEnv.CACHE_PATH}/${filename}.pdf`;
-      const spiskiTables = await pdfReader.loadSpiski(
-        await Fs.readFile(filePathSpiski),
-      );
+      const buff = await Fs.readFile(filePathSpiski);
+      this.logger.debug(`Read buffer done [${filename}] (${buff.length})`);
+      const spiskiTables = await pdfReader.loadSpiski(buff);
+      this.logger.debug(`Read pdf done [${filename}] (${spiskiTables.length})`);
 
       const res = spiskiTables.map((table) =>
         pdfParser.parseIncomingsInfo(table),
@@ -442,7 +444,7 @@ export class PrKomWebProvider extends PrKomBaseProvider {
 
         // if (!incomingsInfo.isCache) {
         this.logger.log(`[processFilesWatcher] Update file: ${filename}`);
-        await new Promise((resolve) => setTimeout(resolve, /* 60 */ 2 * 1e3));
+        await new Promise((resolve) => setTimeout(resolve, /* 60 */ 5 * 1e3));
         // }
 
         this.logger.log(
@@ -456,7 +458,7 @@ export class PrKomWebProvider extends PrKomBaseProvider {
         this.logger.log(
           `[processFilesWatcher] All done. Waiting for next update...`,
         );
-        await new Promise((resolve) => setTimeout(resolve, 15 * 60e3));
+        await new Promise((resolve) => setTimeout(resolve, 25 * 60e3));
       }
       await new Promise((resolve) => setImmediate(resolve));
     } while (this.filesWatcherPower);
