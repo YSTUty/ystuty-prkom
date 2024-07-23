@@ -358,6 +358,9 @@ const prepareType = (val: string, key?: keyof AbiturientInfoComb) => {
           : content === 'Зачислен'.toLocaleLowerCase()
           ? AbiturientInfoStateType.Enrolled
           : AbiturientInfoStateType.Unknown)(val?.toLocaleLowerCase());
+    // * Strings or null
+    case 'contractNumber':
+      return val ?? null;
     // * Strings
     case 'uid':
     default:
@@ -375,6 +378,8 @@ const parseBachelor = (
   const subjectsCount =
     baseIndexes.scoreCompetitive - baseIndexes.scoreSubjectsSum - 1;
 
+  const hasContractNumber = baseIndexes.contractNumber !== null;
+
   for (const data of tbodyData) {
     const getData = (i: number, key?: keyof AbiturientInfo) =>
       key ? (prepareType(data[i]?.content, key) as any) : data[i]?.content;
@@ -384,9 +389,15 @@ const parseBachelor = (
       isRed: data[0].isRed,
 
       ...(Object.fromEntries(
-        Object.entries(baseIndexes).map(
-          ([key, i]: [keyof AbiturientInfo, number]) => [key, getData(i, key)],
-        ),
+        Object.entries(baseIndexes)
+          .map(([key, i]: [keyof AbiturientInfo, number]) =>
+            (hasContractNumber &&
+              (key === 'originalInUniversity' || key === 'originalFromEGPU')) ||
+            (!hasContractNumber && key === 'contractNumber')
+              ? null
+              : [key, getData(i, key)],
+          )
+          .filter(Boolean),
       ) as AbiturientInfo_Base),
 
       scoreSubjects: new Array(subjectsCount > 0 ? subjectsCount : 0)
@@ -410,6 +421,8 @@ const parseMagister = (
   const baseIndexes = parseBaseTitleIndexes(titles);
   const scoreExamIndex = findIndex('Вступительное испытание');
 
+  const hasContractNumber = baseIndexes.contractNumber !== null;
+
   for (const data of tbodyData) {
     const getData = (i: number, key?: keyof AbiturientInfoComb) =>
       key ? (prepareType(data[i]?.content, key) as any) : data[i]?.content;
@@ -419,9 +432,15 @@ const parseMagister = (
       isRed: data[0].isRed,
 
       ...(Object.fromEntries(
-        Object.entries(baseIndexes).map(
-          ([key, i]: [keyof AbiturientInfo, number]) => [key, getData(i, key)],
-        ),
+        Object.entries(baseIndexes)
+          .map(([key, i]: [keyof AbiturientInfo, number]) =>
+            (hasContractNumber &&
+              (key === 'originalInUniversity' || key === 'originalFromEGPU')) ||
+            (!hasContractNumber && key === 'contractNumber')
+              ? null
+              : [key, getData(i, key)],
+          )
+          .filter(Boolean),
       ) as AbiturientInfo_Base),
 
       scoreExam: getData(scoreExamIndex, 'scoreExam') || null,
@@ -466,6 +485,8 @@ const parseBaseTitleIndexes = (titles: ParsedTableIncomings[]) => {
     state: findIndex('Состояние'),
     priority: findIndex('Приоритет'),
     isHightPriority: findIndex('Это высший приоритет'),
+    // Договор.Номер договора (из заявления)
+    contractNumber: findIndex('Договор.Номер договора'),
   };
   return indexes;
 };
