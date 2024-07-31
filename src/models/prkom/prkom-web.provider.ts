@@ -219,7 +219,7 @@ export class PrKomWebProvider extends PrKomBaseProvider {
       if (err instanceof AxiosError) {
         if (err.response?.status === 404) {
           if (!useDefaultSvod) {
-            return this.getIncomingsInfo(filename, cacheTtl, true);
+            // return this.getIncomingsInfo(filename, cacheTtl, true);
           }
           return null;
         }
