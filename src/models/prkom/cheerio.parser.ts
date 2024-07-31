@@ -454,14 +454,15 @@ const makeFindIndex = (titles: ParsedTable[]) => {
     .map((e) => e.content?.toLocaleLowerCase().trim().replace(/\s/g, '_'))
     .filter(Boolean);
 
-  return (str: string, strict = false) => {
+  return (str: string, strict: boolean | 2 = false) => {
     // fix differnet Windows-1252 & UTF-8 spaces
     str = str.replace(/\s/g, '_');
     return ((e) => (e === -1 ? null : e))(
-      preparedTitles.findIndex(
-        (e) =>
-          (!strict && e.startsWith(str.toLocaleLowerCase())) ||
-          e === str.toLocaleLowerCase(),
+      preparedTitles.findIndex((e) =>
+        strict === 2
+          ? e.includes(str.toLocaleLowerCase())
+          : (!strict && e.startsWith(str.toLocaleLowerCase())) ||
+            e === str.toLocaleLowerCase(),
       ),
     );
   };
@@ -488,7 +489,8 @@ const parseBaseTitleIndexes = (titles: ParsedTableIncomings[]) => {
     // Договор.Номер договора (из заявления)
     // Договор по физ лицу.Номер договора
     // ДоговорПоФизЛицуНомерДоговора
-    contractNumber: findIndex('Номер договора') ?? findIndex('НомерДоговора'),
+    contractNumber:
+      findIndex('Номер договора', 2) ?? findIndex('НомерДоговора', 2),
   };
   return indexes;
 };
