@@ -487,7 +487,8 @@ const parseBaseTitleIndexes = (titles: ParsedTableIncomings[]) => {
     isHightPriority: findIndex('Это высший приоритет'),
     // Договор.Номер договора (из заявления)
     // Договор по физ лицу.Номер договора
-    contractNumber: findIndex('Номер договора'),
+    // ДоговорПоФизЛицуНомерДоговора
+    contractNumber: findIndex('Номер договора') ?? findIndex('НомерДоговора'),
   };
   return indexes;
 };
